@@ -354,8 +354,10 @@ const createAuthConfig = () => {
         domain: env.COOKIE_DOMAIN,
       },
     },
-    baseURL: env.VITE_PUBLIC_BACKEND_URL,
+    baseURL: new URL(env.VITE_PUBLIC_BACKEND_URL).origin,
+    basePath: '/api/auth',
     trustedOrigins: [
+      'https://app.yachtbase.co',
       'https://app.0.email',
       'https://sapi.0.email',
       'https://staging.0.email',
