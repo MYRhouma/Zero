@@ -72,7 +72,7 @@ export default function Footer() {
                 transition={{ duration: 0.5, delay: 0.4 }}
                 className="flex w-fit flex-col items-center justify-center md:pt-4"
               >
-                <a href="/login">
+                <a href="/dashboard/email-inbox/login">
                   <Button className="h-8 bg-white text-black cursor-pointer">Get Started</Button>
                 </a>
               </motion.div>

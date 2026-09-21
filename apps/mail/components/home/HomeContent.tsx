@@ -133,7 +133,7 @@ export default function HomeContent() {
                 toast.promise(
                   signIn.social({
                     provider: 'google',
-                    callbackURL: `${window.location.origin}/mail`,
+                    callbackURL: `${window.location.origin}/dashboard/email-inbox/mail`,
                   }),
                   {
                     error: 'Login redirect failed',
