@@ -20,7 +20,13 @@ export const twilio = () => {
   //   }
 
   if (!env.TWILIO_ACCOUNT_SID || !env.TWILIO_AUTH_TOKEN || !env.TWILIO_PHONE_NUMBER) {
-    throw new Error('Twilio is not configured correctly');
+    return {
+      messages: {
+        send: async (_to: string, _body: string) => {
+          throw new Error('Phone verification is not configured');
+        },
+      },
+    };
   }
 
   const send = async (to: string, body: string) => {
