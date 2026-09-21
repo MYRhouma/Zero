@@ -19,7 +19,7 @@ import { getLocale } from '@/paraglide/runtime';
 import { siteConfig } from '@/lib/site-config';
 import { signOut } from '@/lib/auth-client';
 import type { Route } from './+types/root';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { m } from '@/paraglide/messages';
 import { ArrowLeft } from 'lucide-react';
 import * as Sentry from '@sentry/react';
@@ -49,7 +49,7 @@ export const meta: MetaFunction = () => {
     { property: 'og:image', content: siteConfig.openGraph.images[0].url },
     { property: 'og:url', content: siteConfig.alternates.canonical },
     { property: 'og:type', content: 'website' },
-    { rel: 'manifest', href: '/manifest.webmanifest' },
+    { rel: 'manifest', href: '/dashboard/email-inbox/manifest.webmanifest' },
   ];
 };
 
@@ -61,7 +61,6 @@ export function Layout({ children }: PropsWithChildren) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)" />
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-        <link rel="manifest" href="/manifest.json" />
         <Meta />
         {import.meta.env.REACT_SCAN && (
           <script crossOrigin="anonymous" src="//unpkg.com/react-scan/dist/auto.global.js" />
@@ -84,13 +83,14 @@ export function Layout({ children }: PropsWithChildren) {
   );
 }
 
-// export function HydrateFallback() {
-//   return (
-//     <div className="flex h-screen w-full items-center justify-center">
-//       <Loader2 className="h-10 w-10 animate-spin" />
-//     </div>
-//   );
-// }
+export function HydrateFallback() {
+  return (
+    <div className="flex h-screen w-full items-center justify-center bg-white dark:bg-background">
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <span className="sr-only">Loading email workspace</span>
+    </div>
+  );
+}
 
 export default function App() {
   return <Outlet />;
