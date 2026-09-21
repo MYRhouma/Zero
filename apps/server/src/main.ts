@@ -706,7 +706,7 @@ const api = new Hono<HonoContext>()
   .route('/ai', aiRouter)
   .route('/autumn', autumnApi)
   .route('/public', publicRouter)
-  .on(['GET', 'POST', 'OPTIONS'], '/auth/*', (c) => {
+  .on(['GET', 'POST', 'OPTIONS'], '/api/auth/*', (c) => {
     return c.var.auth.handler(c.req.raw);
   })
   .use(
