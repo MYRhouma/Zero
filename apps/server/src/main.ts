@@ -707,7 +707,9 @@ const api = new Hono<HonoContext>()
   .route('/autumn', autumnApi)
   .route('/public', publicRouter)
   .on(['GET', 'POST', 'OPTIONS'], '/auth/*', (c) => {
-    return c.var.auth.handler(c.req.raw);
+    const url = new URL(c.req.raw.url);
+    url.pathname = `/dashboard/email-inbox-api${url.pathname}`;
+    return c.var.auth.handler(new Request(url, c.req.raw));
   })
   .use(
     trpcServer({
