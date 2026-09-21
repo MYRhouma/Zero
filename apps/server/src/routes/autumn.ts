@@ -46,7 +46,7 @@ export const autumnApi = new Hono<AutumnContext>()
   .post('/customers', async (c) => {
     const { autumn, customerData } = c.var;
     const body = await c.req.json();
-    if (!customerData) return c.json({ error: 'No customer ID found' }, 401);
+    if (!customerData) return c.json(null);
 
     return c.json(
       await autumn!.customers
