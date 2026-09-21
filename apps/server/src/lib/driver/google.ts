@@ -17,7 +17,6 @@ import { type gmail_v1, gmail } from '@googleapis/gmail';
 import { OAuth2Client } from 'google-auth-library';
 import type { CreateDraftData } from '../schemas';
 import { createMimeMessage } from 'mimetext';
-import { people } from '@googleapis/people';
 import { cleanSearchValue } from '../utils';
 import { env } from '../../env';
 import { Effect } from 'effect';
@@ -221,14 +220,21 @@ export class GoogleMailManager implements MailManager {
     return this.withErrorHandler(
       'getUserInfo',
       async () => {
-        const res = await people({ version: 'v1', auth: this.auth }).people.get({
-          resourceName: 'people/me',
-          personFields: 'names,photos,emailAddresses',
+        // Use Google's OpenID userinfo endpoint instead of People API. The
+        // OAuth flow already requests these scopes and this keeps mailbox
+        // onboarding working when People API is not enabled in the project.
+        const res = await this.auth.request<{
+          email?: string;
+          name?: string;
+          picture?: string;
+        }>({
+          url: 'https://openidconnect.googleapis.com/v1/userinfo',
+          method: 'GET',
         });
         return {
-          address: res.data.emailAddresses?.[0]?.value ?? '',
-          name: res.data.names?.[0]?.displayName ?? '',
-          photo: res.data.photos?.[0]?.url ?? '',
+          address: res.data.email ?? '',
+          name: res.data.name ?? '',
+          photo: res.data.picture ?? '',
         };
       },
       {},
