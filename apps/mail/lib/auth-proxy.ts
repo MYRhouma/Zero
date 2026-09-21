@@ -1,7 +1,7 @@
 import { createAuthClient } from 'better-auth/client';
 
 const authClient = createAuthClient({
-  baseURL: import.meta.env.VITE_PUBLIC_BACKEND_URL,
+  baseURL: `${import.meta.env.VITE_PUBLIC_BACKEND_URL}/api/auth`,
   fetchOptions: {
     credentials: 'include',
   },

@@ -38,7 +38,9 @@ export const autumnApi = new Hono<AutumnContext>()
             },
           },
     );
-    c.set('autumn', new Autumn({ secretKey: env.AUTUMN_SECRET_KEY }));
+    if (env.AUTUMN_SECRET_KEY) {
+      c.set('autumn', new Autumn({ secretKey: env.AUTUMN_SECRET_KEY }));
+    }
     await next();
   })
   .post('/customers', async (c) => {
