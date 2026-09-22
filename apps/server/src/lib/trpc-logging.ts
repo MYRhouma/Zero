@@ -44,7 +44,10 @@ export const createLoggingMiddleware = () => {
 
         // Initialize logging service
         let loggingService: LoggingService | undefined;
-        if (userId && c.env) {
+        // Datadog is optional for local/self-hosted deployments. Do not create
+        // the client when credentials are intentionally absent; logging must
+        // never turn a normal request into a noisy runtime error.
+        if (userId && c.env?.DD_API_KEY && c.env?.DD_APP_KEY) {
             try {
                 loggingService = new LoggingService(c.env);
                 loggingService.initializeSession(sessionId, userId);
