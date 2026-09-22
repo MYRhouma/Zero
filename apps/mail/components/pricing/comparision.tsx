@@ -262,7 +262,7 @@ export default function Comparision() {
                 <div className="inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-lg bg-[#3F2776] p-2">
                   <div className="relative h-6 w-6 overflow-hidden">
                     <img
-                      src="purple-zap.svg"
+                      src="/purple-zap.svg"
                       alt="purple-zap"
                       className="h-full w-full"
                       height={24}

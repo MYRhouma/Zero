@@ -207,7 +207,7 @@ export default function PricingCard() {
                 )}
               >
                 <div className="relative h-6 w-6">
-                  <img height={24} width={24} src="zap.svg" alt="hi" />
+                  <img height={24} width={24} src="/zap.svg" alt="hi" />
                 </div>
               </div>
 
