@@ -40,7 +40,7 @@ export const AddConnectionDialog = ({
       toast.promise(
         attach({
           productId: 'pro-example',
-          successUrl: `${window.location.origin}/mail/inbox?success=true`,
+          successUrl: `${import.meta.env.VITE_PUBLIC_APP_URL}/mail/inbox?success=true`,
         }),
         {
           success: 'Redirecting to payment...',

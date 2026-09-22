@@ -14,7 +14,7 @@ export default function Comparision() {
       toast.promise(
         signIn.social({
           provider: 'google',
-          callbackURL: `${window.location.origin}/pricing`,
+          callbackURL: `${import.meta.env.VITE_PUBLIC_APP_URL}/pricing`,
         }),
         {
           success: 'Redirecting to login...',
@@ -28,7 +28,7 @@ export default function Comparision() {
       toast.promise(
         attach({
           productId: 'pro-example',
-          successUrl: `${window.location.origin}/mail/inbox?success=true`,
+          successUrl: `${import.meta.env.VITE_PUBLIC_APP_URL}/mail/inbox?success=true`,
         }),
         {
           success: 'Redirecting to payment...',
@@ -156,7 +156,7 @@ export default function Comparision() {
                     toast.promise(
                       signIn.social({
                         provider: 'google',
-                        callbackURL: `${window.location.origin}/mail`,
+                        callbackURL: `${import.meta.env.VITE_PUBLIC_APP_URL}/mail/inbox`,
                       }),
                       {
                         error: 'Login redirect failed',

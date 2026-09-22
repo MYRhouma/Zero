@@ -28,7 +28,7 @@ export function PricingDialog() {
       toast.promise(
         attach({
           productId: isAnnual ? 'pro_annual' : 'pro-example',
-          successUrl: `${window.location.origin}/mail/inbox?success=true`,
+          successUrl: `${import.meta.env.VITE_PUBLIC_APP_URL}/mail/inbox?success=true`,
         }),
         {
           success: 'Redirecting to payment...',

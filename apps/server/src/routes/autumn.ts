@@ -46,23 +46,33 @@ export const autumnApi = new Hono<AutumnContext>()
   .post('/customers', async (c) => {
     const { autumn, customerData } = c.var;
     const body = await c.req.json();
-    if (!customerData) return c.json(null);
+    // Autumn is an optional integration for the self-hosted deployment.  The
+    // mail UI calls this endpoint after every successful sign-in, so an
+    // unavailable billing provider must not turn a healthy session into a
+    // 500 (or trigger a sign-out loop).
+    if (!customerData || !autumn?.customers?.create) return c.json(null);
 
-    return c.json(
-      await autumn!.customers
-        .create({
-          id: customerData.customerId,
-          ...customerData.customerData,
-          ...sanitizeCustomerBody(body),
-        })
-        .then((data) => data.data),
-    );
+    try {
+      return c.json(
+        await autumn.customers
+          .create({
+            id: customerData.customerId,
+            ...customerData.customerData,
+            ...sanitizeCustomerBody(body),
+          })
+          .then((data) => data.data),
+      );
+    } catch (error) {
+      console.warn('[autumn] customer provisioning skipped:', error);
+      return c.json(null);
+    }
   })
   .post('/attach', async (c) => {
     const { autumn, customerData } = c.var;
     const body = await c.req.json();
     const sanitizedBody = sanitizeCustomerBody(body);
     if (!customerData) return c.json({ error: 'No customer ID found' }, 401);
+    if (!autumn) return c.json(null);
 
     return c.json(
       await autumn!
@@ -79,6 +89,7 @@ export const autumnApi = new Hono<AutumnContext>()
     const body = await c.req.json();
     const sanitizedBody = sanitizeCustomerBody(body);
     if (!customerData) return c.json({ error: 'No customer ID found' }, 401);
+    if (!autumn) return c.json(null);
 
     return c.json(
       await autumn!
@@ -94,6 +105,7 @@ export const autumnApi = new Hono<AutumnContext>()
     const body = await c.req.json();
     const sanitizedBody = sanitizeCustomerBody(body);
     if (!customerData) return c.json({ error: 'No customer ID found' }, 401);
+    if (!autumn) return c.json(null);
 
     return c.json(
       await autumn!
@@ -110,6 +122,7 @@ export const autumnApi = new Hono<AutumnContext>()
     const body = await c.req.json();
     const sanitizedBody = sanitizeCustomerBody(body);
     if (!customerData) return c.json({ error: 'No customer ID found' }, 401);
+    if (!autumn) return c.json(null);
 
     return c.json(
       await autumn!
@@ -125,6 +138,7 @@ export const autumnApi = new Hono<AutumnContext>()
     const { autumn, customerData } = c.var;
     const body = await c.req.json();
     if (!customerData) return c.json({ error: 'No customer ID found' }, 401);
+    if (!autumn?.customers?.billingPortal) return c.json(null);
 
     return c.json(
       await autumn!.customers
@@ -136,6 +150,7 @@ export const autumnApi = new Hono<AutumnContext>()
     const { autumn, customerData } = c.var;
     const body = await c.req.json();
     if (!customerData) return c.json({ error: 'No customer ID found' }, 401);
+    if (!autumn?.customers?.billingPortal) return c.json(null);
 
     return c.json(
       await autumn!.customers
@@ -150,6 +165,7 @@ export const autumnApi = new Hono<AutumnContext>()
     const { autumn, customerData } = c.var;
     const body = await c.req.json();
     if (!customerData) return c.json({ error: 'No customer ID found' }, 401);
+    if (!autumn?.entities?.create) return c.json(null);
 
     return c.json(
       await autumn!.entities.create(customerData.customerId, body).then((data) => data.data),
@@ -158,6 +174,7 @@ export const autumnApi = new Hono<AutumnContext>()
   .get('/entities/:entityId', async (c) => {
     const { autumn, customerData } = c.var;
     if (!customerData) return c.json({ error: 'No customer ID found' }, 401);
+    if (!autumn?.entities?.get) return c.json(null);
 
     const entityId = c.req.param('entityId');
     const expand = c.req.query('expand')?.split(',') as 'invoices'[] | undefined;
@@ -181,6 +198,7 @@ export const autumnApi = new Hono<AutumnContext>()
   .delete('/entities/:entityId', async (c) => {
     const { autumn, customerData } = c.var;
     if (!customerData) return c.json({ error: 'No customer ID found' }, 401);
+    if (!autumn?.entities?.delete) return c.json(null);
 
     const entityId = c.req.param('entityId');
 
@@ -200,6 +218,7 @@ export const autumnApi = new Hono<AutumnContext>()
   })
   .get('/components/pricing_table', async (c) => {
     const { autumn, customerData } = c.var;
+    if (!autumn) return c.json(null);
 
     return c.json(
       await fetchPricingTable({
