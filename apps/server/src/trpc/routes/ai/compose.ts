@@ -13,7 +13,7 @@ import { env } from '../../../env';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText } from 'ai';
 import { z } from 'zod';
-import { getGeminiComposeModelName } from './compose-model';
+import { getGeminiComposeModelName, getGeminiGenerationSettings } from './compose-model';
 
 type ComposeEmailInput = {
   prompt: string;
@@ -114,10 +114,7 @@ export async function composeEmail(input: ComposeEmailInput) {
     ],
     maxSteps: 10,
     maxTokens: 2_000,
-    temperature: 0.35,
-    frequencyPenalty: 0.2,
-    presencePenalty: 0.1,
-    maxRetries: 1,
+    ...getGeminiGenerationSettings(),
     tools: {
       webSearch: webSearch(),
     },
@@ -294,10 +291,7 @@ const generateSubject = async (message: string, styleProfile?: WritingStyleMatri
       },
     ],
     maxTokens: 50,
-    temperature: 0.3,
-    frequencyPenalty: 0.1,
-    presencePenalty: 0.1,
-    maxRetries: 1,
+    ...getGeminiGenerationSettings(0.3),
   });
 
   return text.trim();

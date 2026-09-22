@@ -650,14 +650,19 @@ export function ThreadDisplay() {
 
   const handleToggleImportant = useCallback(async () => {
     if (!emailData || !id) return;
-    await toggleImportant({ ids: [id] });
-    await refetchThread();
-    if (isImportant) {
-      toast.success(m['common.mail.markedAsImportant']());
-    } else {
-      toast.error('Failed to mark as important');
+    try {
+      await toggleImportant({ ids: [id] });
+      await refetchThread();
+      toast.success(
+        isImportant
+          ? m['common.mail.markedAsUnimportant']()
+          : m['common.mail.markedAsImportant'](),
+      );
+    } catch (error) {
+      console.error('Failed to toggle important state:', error);
+      toast.error('Failed to update importance');
     }
-  }, [emailData, id]);
+  }, [emailData, id, isImportant, refetchThread, toggleImportant]);
 
   // Set initial star state based on email data
   useEffect(() => {

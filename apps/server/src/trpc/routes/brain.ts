@@ -4,6 +4,7 @@ import { activeConnectionProcedure, router } from '../trpc';
 import { setSubscribedState } from '../../lib/utils';
 import { env } from '../../env';
 import { z } from 'zod';
+import { getVectorMetadata } from './brain-vector';
 
 const labelSchema = z.object({
   name: z.string(),
@@ -36,18 +37,19 @@ export const brainRouter = router({
     )
     .query(async ({ input, ctx }) => {
       const { threadId } = input;
-      const response = await env.VECTORIZE.getByIds([threadId]);
-      if (response.length && response?.[0]?.metadata?.['summary']) {
-        const result = response[0].metadata as { summary: string; connection: string };
-        if (result.connection !== ctx.activeConnection.id) return null;
-        const shortResponse = await env.AI.run('@cf/facebook/bart-large-cnn', {
-          input_text: result.summary,
-        });
-        return {
-          data: {
-            short: shortResponse.summary,
-          },
-        };
+      const metadata = await getVectorMetadata(env.VECTORIZE, threadId);
+      if (typeof metadata?.summary === 'string') {
+        if (metadata.connection !== ctx.activeConnection.id) return null;
+
+        try {
+          const shortResponse = await env.AI.run('@cf/facebook/bart-large-cnn', {
+            input_text: metadata.summary,
+          });
+          return { data: { short: shortResponse.summary } };
+        } catch (error) {
+          console.warn(`[brain] Summary model unavailable for ${threadId}`, error);
+          return { data: { short: metadata.summary } };
+        }
       }
       return null;
     }),
