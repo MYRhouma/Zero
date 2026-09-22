@@ -32,8 +32,11 @@ import { useSession } from '@/lib/auth-client';
 import { m } from '@/paraglide/messages';
 import { isMac } from '@/lib/platform';
 import { useQueryState } from 'nuqs';
-import { cn } from '@/lib/utils';
+import { cn, FOLDERS } from '@/lib/utils';
 import { useAtom } from 'jotai';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTRPC } from '@/providers/query-provider';
+import { toast } from 'sonner';
 
 // const AutoLabelingSettings = () => {
 //   const trpc = useTRPC();
@@ -325,6 +328,9 @@ export function MailLayout() {
   const { data: activeConnection } = useActiveConnection();
   const { activeFilters, clearAllFilters } = useCommandPalette();
   const [, setIsCommandPaletteOpen] = useQueryState('isCommandPaletteOpen');
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const { mutateAsync: syncFolder } = useMutation(trpc.mail.syncFolder.mutationOptions());
 
   useEffect(() => {
     if (prevFolderRef.current !== folder && mail.bulkSelected.length > 0) {
@@ -404,9 +410,23 @@ export function MailLayout() {
     setMail({ ...mail, bulkSelected: [] });
   }, [mail, setMail]);
 
-  const handleRefetchThreads = useCallback(() => {
-    refetchThreads();
-  }, [refetchThreads]);
+  const handleRefetchThreads = useCallback(async () => {
+    try {
+      if (folder === FOLDERS.SENT) {
+        await syncFolder(FOLDERS.SENT);
+        await queryClient.invalidateQueries({
+          queryKey: trpc.mail.listThreads.infiniteQueryKey({ folder: FOLDERS.SENT }),
+        });
+        toast.success('Sent folder sync started');
+      }
+      await refetchThreads();
+    } catch (error) {
+      console.error('Failed to refresh mail folder:', error);
+      toast.error(
+        folder === FOLDERS.SENT ? 'Failed to sync Sent folder' : 'Failed to refresh folder',
+      );
+    }
+  }, [folder, queryClient, refetchThreads, syncFolder, trpc]);
 
   const handleOpenCommandPalette = useCallback(() => {
     setIsCommandPaletteOpen('true');
