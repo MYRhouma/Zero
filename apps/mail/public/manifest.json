@@ -1,12 +1,12 @@
 {
-  "name": "Zero",
-  "short_name": "0",
-  "description": "Zero - the first open source email app that puts your privacy and safety first.",
-  "scope": "/",
-  "start_url": "/mail/inbox",
+  "name": "Yachtbase Email",
+  "short_name": "Yachtbase",
+  "description": "Yachtbase email workspace with AI-powered inbox tools.",
+  "scope": "/dashboard/email/",
+  "start_url": "/dashboard/email/mail/inbox",
   "display": "standalone",
-  "background_color": "#000",
-  "theme_color": "#fff",
+  "background_color": "#0b2431",
+  "theme_color": "#397b7b",
   "icons": [
     {
       "src": "/icons-pwa/icon-512.png",

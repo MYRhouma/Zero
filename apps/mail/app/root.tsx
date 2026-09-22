@@ -58,8 +58,8 @@ export function Layout({ children }: PropsWithChildren) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)" />
-        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#0b2431" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#f6fbfa" media="(prefers-color-scheme: light)" />
         <Meta />
         {import.meta.env.REACT_SCAN && (
           <script crossOrigin="anonymous" src="//unpkg.com/react-scan/dist/auto.global.js" />
@@ -71,7 +71,7 @@ export function Layout({ children }: PropsWithChildren) {
           <ClientProviders>{children}</ClientProviders>
           <DubAnalytics
             domainsConfig={{
-              refer: 'mail0.com',
+              refer: 'yachtbase.co',
             }}
           />
         </ServerProviders>

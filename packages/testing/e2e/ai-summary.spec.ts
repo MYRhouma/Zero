@@ -2,11 +2,9 @@ import { test, expect } from '@playwright/test';
 
 const email = process.env.EMAIL;
 
-if (!email) {
-  throw new Error('EMAIL environment variable must be set.');
-}
-
 test.describe('AI Chat Email Summarization', () => {
+  test.skip(!email, 'requires the testing recipient EMAIL environment variable');
+
   test('should summarize emails and display the result', async ({ page }) => {
     await page.goto('/mail/inbox');
     await page.waitForLoadState('domcontentloaded');

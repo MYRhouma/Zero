@@ -74,7 +74,7 @@ export function ThreadDemo({ messages, isMobile }: ThreadDisplayProps) {
     <div
       className={cn(
         'flex flex-col',
-        isFullscreen ? 'h-screen' : isMobile ? 'h-full' : 'h-[calc(100dvh-2rem)]',
+        isFullscreen ? 'h-screen' : isMobile ? 'h-full' : 'h-[calc(100dvh-2rem)] lg:h-[calc(100dvh-4rem-2rem)]',
       )}
     >
       <div
@@ -714,7 +714,7 @@ export function ThreadDisplay() {
     <div
       className={cn(
         'flex flex-col',
-        isFullscreen ? 'h-screen' : isMobile ? 'h-full' : 'h-[calc(100dvh-19px)] rounded-xl',
+        isFullscreen ? 'h-screen' : isMobile ? 'h-full' : 'h-[calc(100dvh-19px)] lg:h-[calc(100dvh-4rem-19px)] rounded-xl',
       )}
     >
       <div
@@ -742,7 +742,7 @@ export function ThreadDisplay() {
                     <Sparkles className="mr-1 h-3.5 w-3.5 fill-[#959595]" />
                     <div className="flex items-center justify-center gap-2.5 px-0.5">
                       <div className="text-base-gray-950 justify-start text-sm leading-none">
-                        Zero chat
+                        Yachtbase AI chat
                       </div>
                     </div>
                   </button>

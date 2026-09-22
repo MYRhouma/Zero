@@ -19,7 +19,7 @@ import { useStats } from '@/hooks/use-stats';
 import SidebarLabels from './sidebar-labels';
 import { useCallback, useRef } from 'react';
 import { BASE_URL } from '@/lib/constants';
-import { Plus } from 'lucide-react';
+import { Mail, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import * as React from 'react';
@@ -192,16 +192,23 @@ export function NavMain({ items }: NavMainProps) {
               className="hover:bg-subtleWhite flex cursor-pointer items-center dark:hover:bg-[#202020]"
             >
               <OldPhone className="relative mr-2.5 h-2 w-2 fill-[#8F8F8F]" />
-              <p className="relative bottom-0.5 mt-0.5 truncate text-[13px]">Live Support</p>
+              <p className="relative bottom-0.5 mt-0.5 truncate text-[13px]">Yachtbase support</p>
             </SidebarMenuButton>
             <NavItem
-              key={'feedback'}
-              isActive={isUrlActive('https://feedback.0.email')}
-              href={'https://feedback.0.email'}
-              url={'https://feedback.0.email'}
+              key={'yachtbase-inbox'}
+              isActive={isUrlActive('/dashboard/inbox')}
+              href={'/dashboard/inbox'}
+              url={'/dashboard/inbox'}
               icon={MessageSquare}
-              target={'_blank'}
-              title={m['navigation.sidebar.feedback']()}
+              title={'Yachtbase inbox'}
+            />
+            <NavItem
+              key={'yachtbase-email'}
+              isActive={isUrlActive('/dashboard/email')}
+              href={'/dashboard/email'}
+              url={'/dashboard/email'}
+              icon={Mail}
+              title={'Yachtbase email'}
             />
           </>
         ) : null}

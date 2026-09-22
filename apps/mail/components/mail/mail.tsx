@@ -21,7 +21,6 @@ import { MailList } from '@/components/mail/mail-list';
 import { useNavigate, useParams } from 'react-router';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
-import { PricingDialog } from '../ui/pricing-dialog';
 import { clearBulkSelectionAtom } from './use-mail';
 import AISidebar from '@/components/ui/ai-sidebar';
 import { useThreads } from '@/hooks/use-threads';
@@ -53,7 +52,6 @@ import { toast } from 'sonner';
 //       },
 //     }),
 //   );
-//   const [, setPricingDialog] = useQueryState('pricingDialog');
 //   const [labels, setLabels] = useState<ITag[]>([]);
 //   const [newLabel, setNewLabel] = useState({ name: '', usecase: '' });
 //   const { mutateAsync: EnableBrain, isPending: isEnablingBrain } = useMutation(
@@ -63,8 +61,6 @@ import { toast } from 'sonner';
 //     trpc.brain.disableBrain.mutationOptions(),
 //   );
 //   const { data: brainState, refetch: refetchBrainState } = useBrainState();
-//   const { isLoading, isPro } = useBilling();
-
 //   useEffect(() => {
 //     if (storedLabels) {
 //       setLabels(
@@ -123,7 +119,7 @@ import { toast } from 'sonner';
 //     }
 //     await updateLabels({ labels: updatedLabels });
 //     setOpen(false);
-//     toast.success('Labels updated successfully, Zero will start using them.');
+//     toast.success('Labels updated successfully, Yachtbase will start using them.');
 //   };
 
 //   const handleEnableBrain = useCallback(async () => {
@@ -160,11 +156,7 @@ import { toast } from 'sonner';
 //     <Dialog
 //       open={open}
 //       onOpenChange={(state) => {
-//         if (!isPro) {
-//           setPricingDialog('true');
-//         } else {
-//           setOpen(state);
-//         }
+//         setOpen(state);
 //       }}
 //     >
 //       <DialogTrigger asChild>
@@ -197,7 +189,7 @@ import { toast } from 'sonner';
 //             </button>
 //           </div>
 //           <DialogDescription className="mt-2">
-//             Configure the labels that Zero uses to automatically organize your emails.
+//             Configure the labels that Yachtbase uses to automatically organize your emails.
 //           </DialogDescription>
 //         </DialogHeader>
 
@@ -434,8 +426,7 @@ export function MailLayout() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <PricingDialog />
-      <div className="rounded-inherit z-5 relative flex p-0 md:mr-0.5 md:mt-1">
+      <div className="yachtbase-mail-canvas rounded-inherit z-5 relative flex p-0 md:mr-0.5 md:mt-1">
         <ResizablePanelGroup
           direction="horizontal"
           autoSaveId="mail-panel-layout"
@@ -446,13 +437,13 @@ export function MailLayout() {
             minSize={35}
             maxSize={35}
             className={cn(
-              `bg-panelLight dark:bg-panelDark mb-1 w-fit shadow-sm md:mr-[3px] md:rounded-2xl lg:flex lg:h-[calc(100dvh-8px)] lg:shadow-sm`,
+              `bg-panelLight dark:bg-panelDark mb-1 w-fit shadow-sm md:mr-[3px] md:rounded-2xl lg:flex lg:h-[calc(100dvh-4rem-8px)] lg:shadow-sm`,
               isDesktop && threadId && 'hidden lg:block',
             )}
             // onMouseEnter={handleMailListMouseEnter}
             // onMouseLeave={handleMailListMouseLeave}
           >
-            <div className="w-full md:h-[calc(100dvh-10px)]">
+            <div className="w-full md:h-[calc(100dvh-10px)] lg:h-[calc(100dvh-4rem-10px)]">
               <div className="z-15 sticky top-0 p-4 pb-0">
                 <div className="flex items-center gap-2">
                   <SidebarToggle className="h-10 w-10" />
@@ -546,14 +537,14 @@ export function MailLayout() {
               <div className="px-4 pt-2">
                 <div
                   className={cn(
-                    `${category === 'Important' ? 'bg-[#F59E0D]' : category === 'All Mail' ? 'bg-[#006FFE]' : category === 'Personal' ? 'bg-[#39ae4a]' : category === 'Updates' ? 'bg-[#8B5CF6]' : category === 'Promotions' ? 'bg-[#F43F5E]' : category === 'Unread' ? 'bg-[#FF4800]' : 'bg-[#F59E0D]'}`,
+                    `${category === 'Important' ? 'bg-[#F59E0D]' : category === 'All Mail' ? 'bg-[#397b7b]' : category === 'Personal' ? 'bg-[#39ae4a]' : category === 'Updates' ? 'bg-[#8B5CF6]' : category === 'Promotions' ? 'bg-[#F43F5E]' : category === 'Unread' ? 'bg-[#FF4800]' : 'bg-[#F59E0D]'}`,
                     'h-0.5 w-full rounded-full transition-opacity',
                     isFetching ? 'opacity-100' : 'opacity-0',
                   )}
                 />
               </div>
 
-              <div className="z-1 relative h-[calc(100dvh-(2px+2px))] overflow-hidden pt-0 md:h-[calc(100dvh-4rem)]">
+              <div className="z-1 relative h-[calc(100dvh-(2px+2px))] overflow-hidden pt-0 md:h-[calc(100dvh-4rem)] lg:h-[calc(100dvh-4rem-4px)]">
                 <MailList />
               </div>
             </div>
@@ -564,7 +555,7 @@ export function MailLayout() {
           {isDesktop && (
             <ResizablePanel
               className={cn(
-                'bg-panelLight dark:bg-panelDark mb-1 mr-0.5 w-fit rounded-2xl shadow-sm lg:h-[calc(100dvh-8px)]',
+                'bg-panelLight dark:bg-panelDark mb-1 mr-0.5 w-fit rounded-2xl shadow-sm lg:h-[calc(100dvh-4rem-8px)]',
                 // Only show on md screens and larger when there is a threadId
                 !threadId && 'hidden lg:block',
               )}
@@ -660,7 +651,7 @@ export const Categories = () => {
             />
           ),
           colors:
-            'border-0 bg-[#006FFE] text-white dark:bg-[#006FFE] dark:text-white dark:hover:bg-[#006FFE]/90',
+            'border-0 bg-[#397b7b] text-white dark:bg-[#397b7b] dark:text-white dark:hover:bg-[#397b7b]/90',
         };
       case 'Personal':
         return {

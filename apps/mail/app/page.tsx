@@ -1,14 +1,13 @@
-import HomeContent from '@/components/home/HomeContent';
-import { authProxy } from '@/lib/auth-proxy';
-import type { Route } from './+types/page';
 import { redirect } from 'react-router';
+import type { Route } from './+types/page';
+import { getYachtbaseSession, yachtbaseLoginUrl } from '@/lib/yachtbase-session';
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
-  const session = await authProxy.api.getSession({ headers: request.headers });
-  if (session?.user.id) throw redirect('/mail/inbox');
-  return null;
+  const session = await getYachtbaseSession(request.headers);
+  if (session?.user.id) throw redirect('/dashboard/email/mail/inbox');
+  throw redirect(yachtbaseLoginUrl(request));
 }
 
 export default function Home() {
-  return <HomeContent />;
+  return null;
 }

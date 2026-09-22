@@ -1,6 +1,6 @@
-const TITLE = 'Zero';
+const TITLE = 'Yachtbase Email';
 const DESCRIPTION =
-  'Experience email the way you want with 0 - the first open source email app that puts your privacy and safety first.';
+  'Yachtbase email workspace with AI-powered inbox chat, labeling, writing assistance, and thread summaries.';
 
 export const siteConfig = {
   title: TITLE,
@@ -8,8 +8,8 @@ export const siteConfig = {
   icons: {
     icon: '/favicon.ico',
   },
-  applicationName: 'Zero',
-  creator: '@nizzyabi @bruvimtired @ripgrim @needleXO @dakdevs @mrgsub',
+  applicationName: 'Yachtbase',
+  creator: 'Yachtbase',
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,

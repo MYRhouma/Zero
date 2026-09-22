@@ -353,7 +353,7 @@ const Thread = memo(
                     )}
                   >
                     <div
-                      className="flex h-full w-full items-center justify-center rounded-full bg-[#006FFE] p-2 dark:bg-[#006FFE]"
+                      className="flex h-full w-full items-center justify-center rounded-full bg-[#397b7b] p-2 dark:bg-[#397b7b]"
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
                         setMail((prev: Config) => ({
@@ -388,8 +388,8 @@ const Thread = memo(
                 )}
                 {/* {displayUnread && !isMailSelected && !isFolderSent ? (
                   <>
-                    <span className="absolute left-2 top-2 size-1.5 rounded bg-[#006FFE]" />
-                    <span className="absolute left-[11px] top-4 size-1 rounded bg-[#006FFE]" />
+                    <span className="absolute left-2 top-2 size-1.5 rounded bg-[#397b7b]" />
+                    <span className="absolute left-[11px] top-4 size-1 rounded bg-[#397b7b]" />
                   </>
                 ) : null} */}
               </div>
@@ -422,7 +422,7 @@ const Thread = memo(
                             </span>
                             {displayUnread && !isMailSelected && !isFolderSent ? (
                               <>
-                                <span className="ml-0.5 size-2 rounded-full bg-[#006FFE]" />
+                                <span className="ml-0.5 size-2 rounded-full bg-[#397b7b]" />
                               </>
                             ) : null}
                           </div>

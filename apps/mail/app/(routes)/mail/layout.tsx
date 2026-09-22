@@ -6,8 +6,8 @@ import { Outlet } from 'react-router';
 export default function MailLayout() {
   return (
     <HotkeyProviderWrapper>
-      <AppSidebar />
-      <div className="bg-sidebar dark:bg-sidebar w-full">
+      <AppSidebar className="lg:left-[260px] lg:top-16 lg:h-[calc(100dvh-4rem)]" />
+      <div className="yachtbase-email-workspace bg-sidebar dark:bg-sidebar w-full">
         <Outlet />
       </div>
       <OnboardingWrapper />

@@ -48,14 +48,14 @@ const getProviderIcon = (providerId: string, className?: string): ReactNode => {
         <>
           <img
             src="/white-icon.svg"
-            alt="Zero"
+            alt="Yachtbase"
             width={15}
             height={15}
             className="mr-2 hidden dark:block"
           />
           <img
             src="/black-icon.svg"
-            alt="Zero"
+            alt="Yachtbase"
             width={15}
             height={15}
             className="mr-2 block dark:hidden"
@@ -136,7 +136,7 @@ function LoginClientContent({ providers, isProd }: LoginClientProps) {
     <div className="flex min-h-screen w-full flex-col items-center justify-between bg-[#111111]">
       <div className="animate-in slide-in-from-bottom-4 mx-auto flex max-w-[600px] grow items-center justify-center space-y-8 px-4 duration-500 sm:px-12 md:px-0">
         <div className="w-full space-y-4">
-          <p className="text-center text-4xl font-bold text-white md:text-5xl">Login to Zero</p>
+          <p className="text-center text-4xl font-bold text-white md:text-5xl">Login to Yachtbase</p>
 
           {error && (
             <Alert variant="default" className="border-orange-500/40 bg-orange-500/10">
@@ -246,7 +246,7 @@ function LoginClientContent({ providers, isProd }: LoginClientProps) {
                 </div>
 
                 <a
-                  href="https://github.com/Mail-0/Mail-0/blob/main/README.md"
+                  href="https://yachtbase.co/docs"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center text-sm text-black/60 underline underline-offset-2 hover:text-black dark:text-white/60 dark:hover:text-white"
@@ -303,21 +303,15 @@ function LoginClientContent({ providers, isProd }: LoginClientProps) {
           )}
         </div>
       </div>
-      <a href={'/'} className='text-white hover:text-gray-200'>Return home</a>
+      <a href={'/dashboard/email'} className='text-white hover:text-gray-200'>Return to Yachtbase email</a>
 
       <footer className="w-full px-6 py-4">
         <div className="mx-auto flex max-w-6xl items-center justify-center gap-6">
           <a
-            href="/terms"
+            href="mailto:support@yachtbase.co"
             className="text-[10px] text-gray-400 hover:text-gray-200 dark:text-gray-400 dark:hover:text-gray-200"
           >
-            Terms of Service
-          </a>
-          <a
-            href="/privacy"
-            className="text-[10px] text-gray-400 hover:text-gray-200 dark:text-gray-400 dark:hover:text-gray-200"
-          >
-            Privacy Policy
+            Contact Yachtbase support
           </a>
         </div>
       </footer>

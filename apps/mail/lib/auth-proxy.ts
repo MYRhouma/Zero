@@ -15,7 +15,7 @@ export const authProxy = {
         fetchOptions: { headers, credentials: 'include' },
       });
       if (session.error) {
-        console.error(`Failed to get session: ${session.error}`, session);
+        console.error('Failed to get email session', session.error.message);
         return null;
       }
       return session.data;

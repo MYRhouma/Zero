@@ -7,42 +7,30 @@ import {
   ListItem,
 } from '@/components/ui/navigation-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { GitHub, Twitter, Discord, LinkedIn, Star } from './icons/icons';
-import { AnimatedNumber } from '@/components/ui/animated-number';
+import { Mail } from 'lucide-react';
 import { signIn, useSession } from '@/lib/auth-client';
 import { Separator } from '@/components/ui/separator';
-import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Menu } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 const resources = [
   {
-    title: 'GitHub',
-    href: 'https://github.com/Mail-0/Zero',
-    description: 'Check out our open-source projects and contributions.',
-    platform: 'github' as const,
+    title: 'Yachtbase email',
+    href: '/dashboard/email',
+    description: 'Open your Yachtbase email workspace.',
   },
   {
-    title: 'Twitter',
-    href: 'https://x.com/mail0dotcom',
-    description: 'Follow us for the latest updates and announcements.',
-    platform: 'twitter' as const,
+    title: 'Yachtbase inbox',
+    href: '/dashboard/inbox',
+    description: 'Open your Yachtbase inbox and conversations.',
   },
   {
-    title: 'LinkedIn',
-    href: 'https://www.linkedin.com/company/mail0/',
-    description: 'Connect with us professionally and stay updated.',
-    platform: 'linkedin' as const,
-  },
-  {
-    title: 'Discord',
-    href: 'https://discord.gg/mail0',
-    description: 'Join our community and chat with the team.',
-    platform: 'discord' as const,
+    title: 'Support',
+    href: 'mailto:support@yachtbase.co',
+    description: 'Contact Yachtbase priority support.',
   },
 ];
 
@@ -50,7 +38,7 @@ const aboutLinks = [
   {
     title: 'About',
     href: '/about',
-    description: 'Learn more about Zero and our mission.',
+    description: 'Learn more about Yachtbase and our mission.',
   },
   {
     title: 'Privacy',
@@ -65,47 +53,14 @@ const aboutLinks = [
   {
     title: 'Contributors',
     href: '/contributors',
-    description: 'See the contributors to Zero.',
+    description: 'Learn more about the Yachtbase team.',
   },
 ];
 
-const IconComponent = {
-  github: GitHub,
-  twitter: Twitter,
-  discord: Discord,
-  linkedin: LinkedIn,
-};
-
-interface GitHubApiResponse {
-  stargazers_count: number;
-}
-
 export function Navigation() {
   const [open, setOpen] = useState(false);
-  const [stars, setStars] = useState(0); // Default fallback value
   const { data: session } = useSession();
   const navigate = useNavigate();
-
-  const { data: githubData } = useQuery({
-    queryKey: ['githubStars'],
-    queryFn: async () => {
-      const response = await fetch('https://api.github.com/repos/Mail-0/Zero', {
-        headers: {
-          Accept: 'application/vnd.github.v3+json',
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch GitHub stars');
-      }
-      return response.json() as Promise<GitHubApiResponse>;
-    },
-  });
-
-  useEffect(() => {
-    if (githubData) {
-      setStars(githubData.stargazers_count || 0);
-    }
-  }, [githubData]);
 
   return (
     <>
@@ -114,7 +69,7 @@ export function Navigation() {
         <nav className="border-input/50 flex w-full max-w-4xl items-center justify-between gap-2 rounded-xl border-t bg-[#1E1E1E] p-3 px-6">
           <div className="flex items-center gap-6">
             <Link to="/" className="relative bottom-1 cursor-pointer">
-              <img src="white-icon.svg" alt="Zero Email" width={22} height={22} />
+              <img src="white-icon.svg" alt="Yachtbase" width={22} height={22} />
               <span className="text-muted-foreground absolute -right-[-0.5px] text-[10px]">
                 beta
               </span>
@@ -146,7 +101,6 @@ export function Navigation() {
                           key={resource.title}
                           title={resource.title}
                           href={resource.href}
-                          platform={resource.platform}
                         >
                           {resource.description}
                         </ListItem>
@@ -156,7 +110,7 @@ export function Navigation() {
                 </NavigationMenuItem>
                 <NavigationMenuItem className="bg-transparent text-white">
                   <Button asChild variant="ghost" className="h-9 bg-transparent cursor-pointer">
-                    <a href="/pricing">Pricing</a>
+                    <a href="/dashboard/settings/billing">Yachtbase plans</a>
                   </Button>
                 </NavigationMenuItem>
                 <NavigationMenuItem className="bg-transparent text-white cursor-pointer">
@@ -170,24 +124,6 @@ export function Navigation() {
             </NavigationMenu>
           </div>
           <div className="flex gap-2">
-            <a
-              href="https://github.com/Mail-0/Zero"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn(
-                'group inline-flex h-8 items-center gap-2 rounded-lg bg-black px-2 text-sm text-white transition-colors hover:bg-black/90',
-              )}
-            >
-              <div className="flex items-center text-white">
-                <GitHub className="mr-1 size-4 fill-white" />
-                <span className="ml-1 lg:hidden">Star</span>
-                <span className="ml-1 hidden lg:inline">GitHub</span>
-              </div>
-              <div className="flex items-center gap-1 text-sm">
-                <Star className="relative top-px size-4 fill-gray-400 duration-300 group-hover:fill-yellow-400 group-hover:drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]" />
-                <AnimatedNumber value={stars} className="font-medium text-white" />
-              </div>
-            </a>
             <Button
               className="h-8 bg-white text-black hover:bg-white hover:text-black cursor-pointer"
               onClick={() => {
@@ -226,14 +162,14 @@ export function Navigation() {
                 <Link to="/" onClick={() => setOpen(false)}>
                   <img
                     src="white-icon.svg"
-                    alt="Zero Email"
+                    alt="Yachtbase"
                     className="hidden object-contain dark:block"
                     width={22}
                     height={22}
                   />
                   <img
                     src="/black-icon.svg"
-                    alt="0.email Logo"
+                    alt="Yachtbase"
                     className="object-contain dark:hidden"
                     width={22}
                     height={22}
@@ -246,8 +182,8 @@ export function Navigation() {
                 <Link to="/" onClick={() => setOpen(false)}>
                   Home
                 </Link>
-                <Link to="/pricing" onClick={() => setOpen(false)}>
-                  Pricing
+                <Link to="/dashboard/settings/billing" onClick={() => setOpen(false)}>
+                  Yachtbase plans
                 </Link>
                 {aboutLinks.map((link) => (
                   <a key={link.title} href={link.href} className="block font-medium">
@@ -258,7 +194,7 @@ export function Navigation() {
               <a
                 target="_blank"
                 rel="noreferrer noopener"
-                href="https://cal.com/team/0/chat"
+                href="mailto:support@yachtbase.co"
                 className="font-medium"
               >
                 Contact Us
@@ -266,18 +202,11 @@ export function Navigation() {
             </div>
             <Separator className="mt-8" />
             <div className="mt-8 flex flex-row items-center justify-center gap-4">
-              {resources.map((resource) => {
-                const Icon = IconComponent[resource.platform];
-                return (
-                  <Link
-                    key={resource.title}
-                    to={resource.href}
-                    className="flex items-center gap-2 font-medium"
-                  >
-                    {resource.platform && <Icon className="dark:fill-muted-foreground h-5 w-5" />}
-                  </Link>
-                );
-              })}
+              {resources.map((resource) => (
+                <Link key={resource.title} to={resource.href} className="flex items-center gap-2 font-medium">
+                  <Mail className="h-5 w-5" />
+                </Link>
+              ))}
             </div>
           </SheetContent>
         </Sheet>
