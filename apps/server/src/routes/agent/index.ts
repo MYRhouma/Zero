@@ -671,6 +671,13 @@ export class ZeroDriver extends DurableObject<ZeroEnv> {
     return await this.driver.getEmailAliases();
   }
 
+  async getRawEmail(messageId: string) {
+    if (!this.driver) {
+      throw new Error('No driver available');
+    }
+    return await this.driver.getRawEmail(messageId);
+  }
+
   async getMessageAttachments(messageId: string) {
     if (!this.driver) {
       throw new Error('No driver available');
@@ -697,6 +704,15 @@ export class ZeroDriver extends DurableObject<ZeroEnv> {
     this.dropTables();
     this.createTables();
     await this.syncFolders();
+  }
+
+  async syncFolder(folder: string) {
+    if (this.name === 'general' || this.name.includes('aggregate')) {
+      return { folder, triggered: false };
+    }
+
+    await this.triggerSyncWorkflow(folder);
+    return { folder, triggered: true };
   }
 
   public async setupAuth() {

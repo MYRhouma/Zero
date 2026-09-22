@@ -25,6 +25,7 @@ import { type HonoContext } from '../../ctx';
 import { TRPCError } from '@trpc/server';
 import { env } from '../../env';
 import { z } from 'zod';
+import { syncFolderSchema } from './sync-folder';
 
 const senderSchema = z.object({
   name: z.string().optional(),
@@ -59,6 +60,15 @@ export const mailRouter = router({
     const { activeConnection } = ctx;
     return await forceReSync(activeConnection.id);
   }),
+  syncFolder: activeDriverProcedure
+    .input(syncFolderSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { activeConnection } = ctx;
+      const executionCtx = getContext<HonoContext>().executionCtx;
+      const { stub: agent } = await getZeroAgent(activeConnection.id, executionCtx);
+
+      return await agent.syncFolder(input);
+    }),
   get: activeDriverProcedure
     .input(
       z.object({

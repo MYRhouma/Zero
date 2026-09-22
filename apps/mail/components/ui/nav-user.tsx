@@ -37,7 +37,7 @@ import { m } from '@/paraglide/messages';
 import { useTheme } from 'next-themes';
 import { useQueryState } from 'nuqs';
 import { Button } from './button';
-import { cn } from '@/lib/utils';
+import { cn, FOLDERS } from '@/lib/utils';
 import { toast } from 'sonner';
 
 const bytesToMB = (bytes: number) => (bytes / 1024 / 1024).toFixed(2);
@@ -99,6 +99,7 @@ export function NavUser() {
     trpc.connections.setDefault.mutationOptions(),
   );
   const { mutateAsync: handleForceSync } = useMutation(trpc.mail.forceSync.mutationOptions());
+  const { mutateAsync: handleSyncFolder } = useMutation(trpc.mail.syncFolder.mutationOptions());
   const { openBillingPortal, customer: billingCustomer, isPro } = useBilling();
   const pathname = useLocation().pathname;
   const queryClient = useQueryClient();
@@ -120,6 +121,19 @@ export function NavUser() {
     await idbClear();
     toast.success('Cache cleared successfully');
   }, []);
+
+  const handleSentSync = useCallback(async () => {
+    try {
+      await handleSyncFolder(FOLDERS.SENT);
+      await queryClient.invalidateQueries({
+        queryKey: trpc.mail.listThreads.infiniteQueryKey({ folder: FOLDERS.SENT }),
+      });
+      toast.success('Sent folder sync started');
+    } catch (error) {
+      console.error('Error syncing Sent folder:', error);
+      toast.error('Failed to sync Sent folder');
+    }
+  }, [handleSyncFolder, queryClient, trpc]);
 
   const handleCopyConnectionId = useCallback(async () => {
     await navigator.clipboard.writeText(activeConnection?.id || '');
@@ -320,6 +334,12 @@ export function NavUser() {
                     <div className="flex items-center gap-2">
                       <RefreshCcw size={16} className="opacity-60" />
                       <p className="text-[13px] opacity-60">Force re-sync</p>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSentSync()}>
+                    <div className="flex items-center gap-2">
+                      <RefreshCcw size={16} className="opacity-60" />
+                      <p className="text-[13px] opacity-60">Sync Sent folder</p>
                     </div>
                   </DropdownMenuItem>
                   <SyncingStatusIndicator
@@ -571,6 +591,12 @@ export function NavUser() {
                     <div className="flex items-center gap-2">
                       <RefreshCcw size={16} className="opacity-60" />
                       <p className="text-[13px] opacity-60">Force re-sync</p>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSentSync()}>
+                    <div className="flex items-center gap-2">
+                      <RefreshCcw size={16} className="opacity-60" />
+                      <p className="text-[13px] opacity-60">Sync Sent folder</p>
                     </div>
                   </DropdownMenuItem>
                   <SyncingStatusIndicator
