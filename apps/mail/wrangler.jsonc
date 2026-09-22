@@ -15,21 +15,24 @@
       "name": "zero-local",
       "vars": {
         "VITE_PUBLIC_BACKEND_URL": "http://localhost:8787",
+        "VITE_PUBLIC_YACHTBASE_API_URL": "http://localhost:8000/api/v1",
         "VITE_PUBLIC_APP_URL": "http://localhost:3000",
       },
     },
     "staging": {
       "name": "zero-staging",
       "vars": {
-        "VITE_PUBLIC_BACKEND_URL": "https://sapi.0.email",
-        "VITE_PUBLIC_APP_URL": "https://staging.0.email",
+        "VITE_PUBLIC_BACKEND_URL": "https://staging.yachtbase.co/dashboard/email-api",
+        "VITE_PUBLIC_YACHTBASE_API_URL": "https://api-dev.yachtbase.co/api/v1",
+        "VITE_PUBLIC_APP_URL": "https://staging.yachtbase.co/dashboard/email",
       },
     },
     "production": {
       "name": "zero-production",
       "vars": {
-        "VITE_PUBLIC_BACKEND_URL": "https://api.0.email",
-        "VITE_PUBLIC_APP_URL": "https://0.email",
+        "VITE_PUBLIC_BACKEND_URL": "https://app.yachtbase.co/dashboard/email-api",
+        "VITE_PUBLIC_YACHTBASE_API_URL": "https://api.yachtbase.co/api/v1",
+        "VITE_PUBLIC_APP_URL": "https://app.yachtbase.co/dashboard/email",
       },
     },
   },

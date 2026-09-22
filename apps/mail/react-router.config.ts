@@ -1,7 +1,7 @@
 import type { Config } from '@react-router/dev/config';
 
 export default {
-  basename: '/dashboard/email-inbox',
+  basename: '/dashboard/email',
   ssr: false,
   buildDirectory: 'build',
   appDirectory: 'app',

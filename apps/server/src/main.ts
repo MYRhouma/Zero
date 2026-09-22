@@ -708,7 +708,7 @@ const api = new Hono<HonoContext>()
   .route('/public', publicRouter)
   .on(['GET', 'POST', 'OPTIONS'], '/auth/*', (c) => {
     const url = new URL(c.req.raw.url);
-    url.pathname = `/dashboard/email-inbox-api${url.pathname}`;
+    url.pathname = `/dashboard/email-api${url.pathname}`;
     return c.var.auth.handler(new Request(url, c.req.raw));
   })
   .use(

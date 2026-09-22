@@ -13,7 +13,7 @@ const ReactCompilerConfig = {
 };
 
 export default defineConfig({
-  base: '/dashboard/email-inbox/',
+  base: '/dashboard/email/',
   plugins: [
     oxlintPlugin(),
     reactRouter(),
