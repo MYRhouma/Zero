@@ -16,7 +16,9 @@ export async function compressImage(
 
   return new Promise((resolve, reject) => {
     const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    // Image compression may read pixels repeatedly in some browsers. Opt in
+    // to the browser's readback-optimized canvas path when available.
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     
     if (!ctx) {
       reject(new Error('Failed to get canvas 2D context'));

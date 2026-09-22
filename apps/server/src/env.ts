@@ -32,6 +32,11 @@ export type ZeroEnv = {
   prompts_storage: KVNamespace;
   NODE_ENV: 'local' | 'development' | 'production';
   JWT_SECRET: 'secret';
+  /**
+   * Intercom's identity-verification secret is optional. Keep the widget
+   * disabled unless the deployment explicitly configures the Intercom secret.
+   */
+  INTERCOM_IDENTITY_VERIFICATION_SECRET?: string;
   ELEVENLABS_API_KEY: '1234567890';
   DISABLE_CALLS: 'true' | '';
   DROP_AGENT_TABLES: 'false';
