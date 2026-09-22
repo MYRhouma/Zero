@@ -89,70 +89,83 @@ const scheduleCampaign = (userInfo: { address: string; name: string }) =>
   });
 
 const connectionHandlerHook = async (account: Account) => {
-  if (!account.accessToken || !account.refreshToken) {
-    console.error('Missing Access/Refresh Tokens', { account });
-    throw new APIError('EXPECTATION_FAILED', {
-      message: 'Missing Access/Refresh Tokens, contact us on Discord for support',
-    });
-  }
+  try {
+    if (!account.accessToken || !account.refreshToken) {
+      console.warn('Skipping mailbox provisioning: OAuth tokens are incomplete', {
+        accountId: account.id,
+        providerId: account.providerId,
+      });
+      return;
+    }
 
-  const driver = createDriver(account.providerId, {
-    auth: {
+    const driver = createDriver(account.providerId, {
+      auth: {
+        accessToken: account.accessToken,
+        refreshToken: account.refreshToken,
+        userId: account.userId,
+        email: '',
+      },
+    });
+
+    const userInfo = await driver.getUserInfo().catch(async () => {
+      if (account.accessToken) {
+        await driver.revokeToken(account.accessToken);
+        await resetConnection(account.id);
+      }
+      throw new Response(null, { status: 301, headers: { Location: '/' } });
+    });
+
+    if (!userInfo?.address) {
+      try {
+        await Promise.allSettled(
+          [account.accessToken, account.refreshToken]
+            .filter(Boolean)
+            .map((t) => driver.revokeToken(t as string)),
+        );
+        await resetConnection(account.id);
+      } catch (error) {
+        console.error('Failed to revoke tokens:', error);
+      }
+      throw new Response(null, { status: 303, headers: { Location: '/' } });
+    }
+
+    const updatingInfo = {
+      name: userInfo.name || 'Unknown',
+      picture: userInfo.photo || '',
       accessToken: account.accessToken,
       refreshToken: account.refreshToken,
-      userId: account.userId,
-      email: '',
-    },
-  });
+      scope: driver.getScope(),
+      expiresAt: new Date(Date.now() + (account.accessTokenExpiresAt?.getTime() || 3600000)),
+    };
 
-  const userInfo = await driver.getUserInfo().catch(async () => {
-    if (account.accessToken) {
-      await driver.revokeToken(account.accessToken);
-      await resetConnection(account.id);
-    }
-    throw new Response(null, { status: 301, headers: { Location: '/' } });
-  });
-
-  if (!userInfo?.address) {
-    try {
-      await Promise.allSettled(
-        [account.accessToken, account.refreshToken]
-          .filter(Boolean)
-          .map((t) => driver.revokeToken(t as string)),
-      );
-      await resetConnection(account.id);
-    } catch (error) {
-      console.error('Failed to revoke tokens:', error);
-    }
-    throw new Response(null, { status: 303, headers: { Location: '/' } });
-  }
-
-  const updatingInfo = {
-    name: userInfo.name || 'Unknown',
-    picture: userInfo.photo || '',
-    accessToken: account.accessToken,
-    refreshToken: account.refreshToken,
-    scope: driver.getScope(),
-    expiresAt: new Date(Date.now() + (account.accessTokenExpiresAt?.getTime() || 3600000)),
-  };
-
-  const db = await getZeroDB(account.userId);
-  const [result] = await db.createConnection(
-    account.providerId as EProviders,
-    userInfo.address,
-    updatingInfo,
-  );
-
-  if (env.NODE_ENV === 'production') {
-    await Effect.runPromise(
-      scheduleCampaign({ address: userInfo.address, name: userInfo.name || 'there' }),
+    const db = await getZeroDB(account.userId);
+    const [result] = await db.createConnection(
+      account.providerId as EProviders,
+      userInfo.address,
+      updatingInfo,
     );
-  }
 
-  if (env.GOOGLE_S_ACCOUNT && env.GOOGLE_S_ACCOUNT !== '{}') {
-    await env.subscribe_queue.send({
-      connectionId: result.id,
+    if (env.NODE_ENV === 'production') {
+      await Effect.runPromise(
+        scheduleCampaign({ address: userInfo.address, name: userInfo.name || 'there' }),
+      );
+    }
+
+    if (env.GOOGLE_S_ACCOUNT && env.GOOGLE_S_ACCOUNT !== '{}') {
+      await env.subscribe_queue.send({
+        connectionId: result.id,
+        providerId: account.providerId,
+      });
+    }
+  } catch (error) {
+    // Mailbox provisioning is a post-auth side effect. A provider API outage,
+    // missing optional integration, or campaign failure must not turn a valid
+    // OAuth login into Better Auth's `unable_to_create_user` response. The user
+    // can retry mailbox connection from the in-app connection flow.
+    console.error('Mailbox provisioning failed after OAuth login', {
+      accountId: account.id,
       providerId: account.providerId,
+      error,
     });
   }
 };
