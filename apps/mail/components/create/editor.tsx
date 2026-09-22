@@ -23,6 +23,7 @@ import { TextSelection } from 'prosemirror-state';
 import { cn } from '@/lib/utils';
 
 import { Markdown } from 'tiptap-markdown';
+import Placeholder from '@tiptap/extension-placeholder';
 
 import { useState } from 'react';
 import React from 'react';
@@ -207,6 +208,7 @@ export default function Editor({
           extensions={[
             ...defaultExtensions,
             Markdown,
+            Placeholder.configure({ placeholder }),
             AutoComplete.configure({
               suggestions: {
                 openers: [

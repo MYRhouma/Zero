@@ -10,9 +10,10 @@ import { getPrompt } from '../../../lib/brain';
 import { stripHtml } from 'string-strip-html';
 import { EPrompts } from '../../../types';
 import { env } from '../../../env';
-import { openai } from '@ai-sdk/openai';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText } from 'ai';
 import { z } from 'zod';
+import { getGeminiComposeModelName } from './compose-model';
 
 type ComposeEmailInput = {
   prompt: string;
@@ -28,6 +29,19 @@ type ComposeEmailInput = {
   }>;
   username: string;
   connectionId: string;
+};
+
+const getGeminiComposeModel = () => {
+  const apiKey = env.GEMINI_API_KEY || env.GOOGLE_GENERATIVE_AI_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('Gemini API key is not configured for email composition');
+  }
+
+  const google = createGoogleGenerativeAI({ apiKey });
+  return google(
+    getGeminiComposeModelName(env.GEMINI_MODEL, env.GEMINI_CONTACT_IMPORT_MODEL),
+  );
 };
 
 export async function composeEmail(input: ComposeEmailInput) {
@@ -86,7 +100,7 @@ export async function composeEmail(input: ComposeEmailInput) {
         ];
 
   const { text } = await generateText({
-    model: openai(env.OPENAI_MINI_MODEL || 'gpt-4o-mini'),
+    model: getGeminiComposeModel(),
     messages: [
       {
         role: 'system',
@@ -267,7 +281,7 @@ const generateSubject = async (message: string, styleProfile?: WritingStyleMatri
   );
 
   const { text } = await generateText({
-    model: openai(env.OPENAI_MODEL || 'gpt-4o'),
+    model: getGeminiComposeModel(),
     messages: [
       {
         role: 'system',

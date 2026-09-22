@@ -6,12 +6,10 @@ import {
   GlobalDragHandle,
   HighlightExtension,
   HorizontalRule,
-  Placeholder,
   StarterKit,
   TaskItem,
   TaskList,
   TextStyle,
-  TiptapImage,
   TiptapLink,
   TiptapUnderline,
   UpdatedImage,
@@ -22,8 +20,6 @@ import { cx } from 'class-variance-authority';
 
 //TODO I am using cx here to get tailwind autocomplete working, idk if someone else can write a regex to just capture the class key in objects
 const aiHighlight = AIHighlight;
-//You can overwrite the placeholder with your own configuration
-const placeholder = Placeholder;
 // Custom link extension that exits the link mark when space is typed
 import { Extension } from '@tiptap/core';
 
@@ -61,7 +57,10 @@ const tiptapLink = TiptapLink.configure({
   protocols: ['http', 'https', 'mailto', 'tel'],
 });
 
-const tiptapImage = TiptapImage.extend({
+// UpdatedImage already provides the `image` node and resize attributes. Extend
+// that single image extension with the upload placeholder plugin instead of
+// registering both TiptapImage and UpdatedImage under the same name.
+const image = UpdatedImage.extend({
   addProseMirrorPlugins() {
     return [
       UploadImagesPlugin({
@@ -71,12 +70,6 @@ const tiptapImage = TiptapImage.extend({
   },
 }).configure({
   allowBase64: true,
-  HTMLAttributes: {
-    class: cx('rounded-lg border border-muted'),
-  },
-});
-
-const updatedImage = UpdatedImage.configure({
   HTMLAttributes: {
     class: cx('rounded-lg border border-muted'),
   },
@@ -151,11 +144,9 @@ const characterCount = CharacterCount.configure();
 
 export const defaultExtensions = [
   starterKit,
-  placeholder,
   tiptapLink,
   ExitLinkOnSpace, // Add our custom extension to exit links on space
-  tiptapImage,
-  updatedImage,
+  image,
   taskList,
   taskItem,
   horizontalRule,
