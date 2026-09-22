@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Mail actions: favorite, read, unread', () => {
   test('should allow marking an email as favorite, read, and unread', async ({ page }) => {
-    await page.goto('/mail/inbox');
+    await page.goto('/dashboard/email/mail/inbox');
     await page.waitForLoadState('domcontentloaded');
     console.log('Successfully accessed mail inbox');
 

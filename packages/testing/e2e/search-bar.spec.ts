@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Search Bar Functionality', () => {
   test('should apply and clear multiple filters from the command palette', async ({ page }) => {
-    await page.goto('/mail/inbox');
+    await page.goto('/dashboard/email/mail/inbox');
     await page.waitForLoadState('domcontentloaded');
     console.log('Successfully accessed mail inbox')
 

@@ -15,7 +15,7 @@ setup('inject real authentication session', async ({ page }) => {
     throw new Error('PLAYWRIGHT_SESSION_TOKEN and PLAYWRIGHT_SESSION_DATA environment variables must be set.');
   }
 
-  await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.goto('/dashboard/email/mail/inbox', { waitUntil: 'domcontentloaded', timeout: 60000 });
   
   console.log('Page loaded, setting up authentication...');
 
@@ -58,7 +58,7 @@ setup('inject real authentication session', async ({ page }) => {
     console.log('Could not decode session data for localStorage:', error);
   }
 
-  await page.goto('/mail/inbox');
+  await page.goto('/dashboard/email/mail/inbox');
   await page.waitForLoadState('domcontentloaded');
   
   const currentUrl = page.url();

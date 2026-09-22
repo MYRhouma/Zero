@@ -6,7 +6,7 @@ test.describe('Signing In, Sending mail, Replying to a mail', () => {
   test.skip(!email, 'requires the testing recipient EMAIL environment variable');
 
   test('should send and reply to an email in the same session', async ({ page }) => {
-    await page.goto('/mail/inbox');
+    await page.goto('/dashboard/email/mail/inbox');
     await page.waitForLoadState('domcontentloaded');
     console.log('Successfully accessed mail inbox');
 

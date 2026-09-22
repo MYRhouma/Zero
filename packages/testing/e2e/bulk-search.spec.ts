@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('AI Chat Sidebar', () => {
   test('should perform bulk actions via AI chat', async ({ page }) => {
-    await page.goto('/mail/inbox?aiSidebar=true');
+    await page.goto('/dashboard/email/mail/inbox?aiSidebar=true');
     await page.waitForLoadState('domcontentloaded');
     console.log('Successfully accessed mail inbox with AI sidebar');
 

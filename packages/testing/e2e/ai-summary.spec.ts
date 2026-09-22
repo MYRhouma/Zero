@@ -6,7 +6,7 @@ test.describe('AI Chat Email Summarization', () => {
   test.skip(!email, 'requires the testing recipient EMAIL environment variable');
 
   test('should summarize emails and display the result', async ({ page }) => {
-    await page.goto('/mail/inbox');
+    await page.goto('/dashboard/email/mail/inbox');
     await page.waitForLoadState('domcontentloaded');
     console.log('Successfully accessed mail inbox');
 

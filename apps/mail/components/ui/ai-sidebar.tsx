@@ -309,7 +309,7 @@ function AISidebar({ className }: AISidebarProps) {
   const { labels } = useSearchLabels();
 
   const onMessage = useCallback(
-    (message: any) => {
+    (message: MessageEvent<string>) => {
       try {
         const parsedData = JSON.parse(message.data);
         const { type } = parsedData;
@@ -343,7 +343,8 @@ function AISidebar({ className }: AISidebarProps) {
   );
 
   const agent = useAgent({
-    agent: 'YachtbaseAgent',
+    // Keep the server-registered agent id until a backend binding migration is deployed.
+    agent: 'ZeroAgent',
     name: activeConnection?.id ? String(activeConnection.id) : 'general',
     host: `${import.meta.env.VITE_PUBLIC_BACKEND_URL}`,
     onError: (e) => console.log(e),

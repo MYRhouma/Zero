@@ -8,7 +8,7 @@ test.describe('email visual baseline', () => {
   test.skip(!hasSession, 'requires the existing testing-user session environment');
 
   test('captures the authenticated inbox at desktop and mobile sizes', async ({ page }) => {
-    await page.goto('/mail/inbox');
+    await page.goto('/dashboard/email/mail/inbox');
     await page.waitForLoadState('domcontentloaded');
     await expect(page.getByText('Inbox')).toBeVisible();
 

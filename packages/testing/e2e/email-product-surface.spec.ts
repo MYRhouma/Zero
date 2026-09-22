@@ -15,7 +15,7 @@ test.describe('email product surface', () => {
   });
 
   test('keeps the mounted email workspace available', async ({ page }) => {
-    await page.goto('/mail/inbox');
+    await page.goto('/dashboard/email/mail/inbox');
     await expect(page.getByText('Inbox')).toBeVisible();
   });
 });

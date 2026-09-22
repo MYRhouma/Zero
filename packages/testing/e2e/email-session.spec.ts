@@ -8,7 +8,7 @@ test.describe('canonical email session boundary', () => {
   test.skip(!hasSession, 'requires the existing testing-user session environment');
 
   test('loads the inbox through the canonical email app mount', async ({ page }) => {
-    await page.goto('/mail/inbox');
+    await page.goto('/dashboard/email/mail/inbox');
     await page.waitForLoadState('domcontentloaded');
 
     await expect(page.getByText('Inbox')).toBeVisible();
@@ -16,7 +16,7 @@ test.describe('canonical email session boundary', () => {
   });
 
   test('does not fall through to a public product landing page', async ({ page }) => {
-    await page.goto('/mail/inbox');
+    await page.goto('/dashboard/email/mail/inbox');
     await page.waitForLoadState('domcontentloaded');
 
     await expect(page).not.toHaveTitle(/Zero|Mail-0/i);

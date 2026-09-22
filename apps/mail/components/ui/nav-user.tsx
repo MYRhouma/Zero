@@ -379,13 +379,9 @@ export function NavUser() {
                     </div>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="mt-1" />
-                  <div className="text-muted-foreground/60 flex items-center justify-center gap-1 px-2 pb-2 pt-1 text-[10px]">
-                    <a href="/privacy" className="hover:underline">
-                      Privacy
-                    </a>
-                    <span>·</span>
-                    <a href="/terms" className="hover:underline">
-                      Terms
+                  <div className="text-muted-foreground/60 flex items-center justify-center px-2 pb-2 pt-1 text-[10px]">
+                    <a href="mailto:support@yachtbase.co" className="hover:underline">
+                      Yachtbase support
                     </a>
                   </div>
                 </>
@@ -618,13 +614,9 @@ export function NavUser() {
                     </div>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="mt-1" />
-                  <div className="text-muted-foreground/60 flex items-center justify-center gap-1 px-2 pb-2 pt-1 text-[10px]">
-                    <a href="/privacy" className="hover:underline">
-                      Privacy
-                    </a>
-                    <span>·</span>
-                    <a href="/terms" className="hover:underline">
-                      Terms
+                  <div className="text-muted-foreground/60 flex items-center justify-center px-2 pb-2 pt-1 text-[10px]">
+                    <a href="mailto:support@yachtbase.co" className="hover:underline">
+                      Yachtbase support
                     </a>
                   </div>
                 </DropdownMenuContent>
