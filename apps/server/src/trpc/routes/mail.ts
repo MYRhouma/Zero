@@ -26,6 +26,25 @@ import { TRPCError } from '@trpc/server';
 import { env } from '../../env';
 import { z } from 'zod';
 import { syncFolderSchema } from './sync-folder';
+import { actionForLabels, isYachtbaseImap, yachtbaseMail } from '../../lib/yachtbase-imap';
+import { deleteDraft as deleteImapDraft, getRawEmail as getImapRawEmail, moveThreadsToFolder } from '../../lib/yachtbase-imap-extras';
+
+type MailCtx = { activeConnection: { providerId: string; accessToken: string | null }; c: { req: { header: (name: string) => string | undefined } } };
+
+/** Yachtbase IMAP client for this request, or null for Google/Microsoft connections. */
+const imapMail = (ctx: MailCtx) =>
+  isYachtbaseImap(ctx.activeConnection)
+    ? yachtbaseMail(ctx.activeConnection, ctx.c.req.header('Authorization'))
+    : null;
+
+/** Remove the server copy of a draft once it has been sent; the email itself is already queued. */
+const deleteImapDraftAfterSend = async (ctx: MailCtx, draftId: string) => {
+  try {
+    await deleteImapDraft(ctx.activeConnection, ctx.c.req.header('Authorization'), draftId);
+  } catch (error) {
+    console.warn('Could not delete the sent draft', draftId, error);
+  }
+};
 
 const senderSchema = z.object({
   name: z.string().optional(),
@@ -50,6 +69,7 @@ export const mailRouter = router({
       }),
     )
     .query(async ({ ctx, input }) => {
+      if (imapMail(ctx)) return [];
       const { activeConnection } = ctx;
       const executionCtx = getContext<HonoContext>().executionCtx;
       const { stub: agent } = await getZeroAgent(activeConnection.id, executionCtx);
@@ -57,12 +77,16 @@ export const mailRouter = router({
       return await agent.suggestRecipients(input.query, input.limit);
     }),
   forceSync: activeDriverProcedure.mutation(async ({ ctx }) => {
+      const imap = imapMail(ctx);
+      if (imap) return imap.sync();
     const { activeConnection } = ctx;
     return await forceReSync(activeConnection.id);
   }),
   syncFolder: activeDriverProcedure
     .input(syncFolderSchema)
     .mutation(async ({ ctx, input }) => {
+      const imap = imapMail(ctx);
+      if (imap) return imap.sync();
       const { activeConnection } = ctx;
       const executionCtx = getContext<HonoContext>().executionCtx;
       const { stub: agent } = await getZeroAgent(activeConnection.id, executionCtx);
@@ -78,6 +102,8 @@ export const mailRouter = router({
     .output(IGetThreadResponseSchema)
     .query(async ({ input, ctx }) => {
       const { activeConnection } = ctx;
+      const imap = imapMail(ctx);
+      if (imap) return imap.get(input.id);
       const result = await getThread(activeConnection.id, input.id);
       return result.result;
     }),
@@ -95,6 +121,8 @@ export const mailRouter = router({
     .query(async ({ ctx, input }) => {
       const { folder, maxResults, cursor, q, labelIds } = input;
       const { activeConnection } = ctx;
+      const imap = imapMail(ctx);
+      if (imap) return imap.list({ folder, q, cursor, limit: maxResults, label: labelIds[0] });
       const executionCtx = getContext<HonoContext>().executionCtx;
       const { stub: agent } = await getZeroAgent(activeConnection.id, executionCtx);
 
@@ -210,6 +238,8 @@ export const mailRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const imap = imapMail(ctx);
+      if (imap) return imap.apply('read', input.ids);
       const { activeConnection } = ctx;
       return Promise.all(
         input.ids.map((threadId) =>
@@ -225,6 +255,8 @@ export const mailRouter = router({
     )
     // TODO: Add batching
     .mutation(async ({ input, ctx }) => {
+      const imap = imapMail(ctx);
+      if (imap) return imap.apply('unread', input.ids);
       const { activeConnection } = ctx;
       return Promise.all(
         input.ids.map((threadId) =>
@@ -239,6 +271,8 @@ export const mailRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const imap = imapMail(ctx);
+      if (imap) return imap.apply('important', input.ids);
       const { activeConnection } = ctx;
       return Promise.all(
         input.ids.map((threadId) =>
@@ -255,6 +289,23 @@ export const mailRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const imap = imapMail(ctx);
+      if (imap) {
+        const action = actionForLabels(input.addLabels, input.removeLabels);
+        if (action) {
+          await imap.apply(action, input.threadId);
+          return { success: true };
+        }
+        // Custom labels are IMAP folders: adding one moves the conversation there.
+        const folder = input.addLabels[0];
+        if (folder) {
+          await moveThreadsToFolder(ctx.activeConnection, ctx.c.req.header('Authorization'), input.threadId, folder);
+          return { success: true };
+        }
+        // Removing a folder label moves the conversation back to the inbox.
+        await moveThreadsToFolder(ctx.activeConnection, ctx.c.req.header('Authorization'), input.threadId, 'INBOX');
+        return { success: true };
+      }
       const { activeConnection } = ctx;
       const executionCtx = getContext<HonoContext>().executionCtx;
       const { stub: agent } = await getZeroAgent(activeConnection.id, executionCtx);
@@ -287,6 +338,8 @@ export const mailRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const imap = imapMail(ctx);
+      if (imap) return imap.apply('toggle_star', input.ids);
       const { activeConnection } = ctx;
       const executionCtx = getContext<HonoContext>().executionCtx;
       const { stub: agent } = await getZeroAgent(activeConnection.id, executionCtx);
@@ -341,6 +394,8 @@ export const mailRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const imap = imapMail(ctx);
+      if (imap) return imap.apply('toggle_important', input.ids);
       const { activeConnection } = ctx;
       const executionCtx = getContext<HonoContext>().executionCtx;
       const { stub: agent } = await getZeroAgent(activeConnection.id, executionCtx);
@@ -395,6 +450,8 @@ export const mailRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const imap = imapMail(ctx);
+      if (imap) return imap.apply('star', input.ids);
       const { activeConnection } = ctx;
       return Promise.all(
         input.ids.map((threadId) =>
@@ -409,6 +466,8 @@ export const mailRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const imap = imapMail(ctx);
+      if (imap) return imap.apply('important', input.ids);
       const { activeConnection } = ctx;
       return Promise.all(
         input.ids.map((threadId) =>
@@ -423,6 +482,8 @@ export const mailRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const imap = imapMail(ctx);
+      if (imap) return imap.apply('unstar', input.ids);
       const { activeConnection } = ctx;
       return Promise.all(
         input.ids.map((threadId) =>
@@ -431,6 +492,7 @@ export const mailRouter = router({
       );
     }),
   deleteAllSpam: activeDriverProcedure.mutation(async ({ ctx }): Promise<DeleteAllSpamResponse> => {
+    if (imapMail(ctx)) return { success: true, message: 'No spam to delete', count: 0 };
     const { activeConnection } = ctx;
     try {
       const result = await deleteAllSpam(activeConnection.id);
@@ -456,6 +518,8 @@ export const mailRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const imap = imapMail(ctx);
+      if (imap) return imap.apply('unimportant', input.ids);
       const { activeConnection } = ctx;
       return Promise.all(
         input.ids.map((threadId) =>
@@ -480,9 +544,34 @@ export const mailRouter = router({
         isForward: z.boolean().optional(),
         originalMessage: z.string().optional(),
         scheduleAt: z.string().optional(),
+        templateId: z.string().uuid().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const imap = imapMail(ctx);
+      if (imap) {
+        // Scheduled sends use the chosen time; "undo send" holds mail for a short window.
+        let sendAt: number | undefined;
+        if (input.scheduleAt) {
+          sendAt = Date.parse(input.scheduleAt);
+          if (Number.isNaN(sendAt) || sendAt <= Date.now()) {
+            return { success: false, error: 'Choose a time in the future to schedule this email.' } as const;
+          }
+        } else {
+          const settings = await (await getZeroDB(ctx.sessionUser.id)).findUserSettings();
+          if (settings?.settings?.undoSendEnabled) sendAt = Date.now() + 15_000;
+        }
+        const result = await imap.send({
+          to: input.to, cc: input.cc, bcc: input.bcc, subject: input.subject,
+          html: input.message, threadId: input.threadId, templateId: input.templateId,
+          attachments: input.attachments.map((file) => ({ filename: file.name, mimeType: file.type, data: file.base64 })),
+          sendAt: sendAt ? new Date(sendAt).toISOString() : undefined,
+        });
+        if (input.draftId) await deleteImapDraftAfterSend(ctx, input.draftId);
+        return sendAt
+          ? { success: true, threadId: result.threadId, messageId: result.messageId, sendAt, ...(input.scheduleAt ? { scheduled: true } : { queued: true }) }
+          : { success: true, threadId: result.threadId, messageId: result.messageId };
+      }
       const { activeConnection, sessionUser } = ctx;
       const executionCtx = getContext<HonoContext>().executionCtx;
       const agent = await getZeroAgent(activeConnection.id, executionCtx);
@@ -633,6 +722,11 @@ export const mailRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const imap = imapMail(ctx);
+      if (imap) {
+        await imap.cancel(input.messageId);
+        return { success: true };
+      }
       const { messageId } = input;
       const { activeConnection } = ctx;
       const {
@@ -689,6 +783,11 @@ export const mailRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const imap = imapMail(ctx);
+      if (imap) {
+        await imap.apply('trash', [input.id]);
+        return true;
+      }
       const { activeConnection } = ctx;
       const executionCtx = getContext<HonoContext>().executionCtx;
       const { exec, stub } = await getZeroAgent(activeConnection.id, executionCtx);
@@ -703,6 +802,8 @@ export const mailRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const imap = imapMail(ctx);
+      if (imap) return imap.apply('trash', input.ids);
       const { activeConnection } = ctx;
       return Promise.all(
         input.ids.map((threadId) =>
@@ -717,6 +818,8 @@ export const mailRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const imap = imapMail(ctx);
+      if (imap) return imap.apply('archive', input.ids);
       const { activeConnection } = ctx;
       return Promise.all(
         input.ids.map((threadId) =>
@@ -731,6 +834,8 @@ export const mailRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const imap = imapMail(ctx);
+      if (imap) return imap.apply('archive', input.ids);
       const { activeConnection } = ctx;
       return Promise.all(
         input.ids.map((threadId) =>
@@ -739,6 +844,7 @@ export const mailRouter = router({
       );
     }),
   getEmailAliases: activeDriverProcedure.query(async ({ ctx }) => {
+    if (isYachtbaseImap(ctx.activeConnection)) return [{ email: ctx.activeConnection.email, name: ctx.activeConnection.name || undefined, primary: true }];
     const { activeConnection } = ctx;
     const executionCtx = getContext<HonoContext>().executionCtx;
     const { stub: agent } = await getZeroAgent(activeConnection.id, executionCtx);
@@ -752,6 +858,11 @@ export const mailRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const imap = imapMail(ctx);
+      if (imap) {
+        await imap.apply('snooze', input.ids, { until: new Date(input.wakeAt).toISOString() });
+        return { success: true };
+      }
       const { activeConnection } = ctx;
       if (!input.ids.length) {
         return { success: false, error: 'No thread IDs provided' };
@@ -786,6 +897,11 @@ export const mailRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      const imap = imapMail(ctx);
+      if (imap) {
+        await imap.apply('unsnooze', input.ids);
+        return { success: true };
+      }
       const { activeConnection } = ctx;
       if (!input.ids.length) return { success: false, error: 'No thread IDs' };
       await Promise.all(
@@ -807,6 +923,8 @@ export const mailRouter = router({
       }),
     )
     .query(async ({ ctx, input }) => {
+      const imap = imapMail(ctx);
+      if (imap) return imap.attachments(input.messageId);
       const { activeConnection } = ctx;
       const executionCtx = getContext<HonoContext>().executionCtx;
       const { stub: agent } = await getZeroAgent(activeConnection.id, executionCtx);
@@ -859,6 +977,9 @@ export const mailRouter = router({
       }),
     )
     .query(async ({ input, ctx }) => {
+      if (isYachtbaseImap(ctx.activeConnection)) {
+        return getImapRawEmail(ctx.activeConnection, ctx.c.req.header('Authorization'), input.id);
+      }
       const { activeConnection } = ctx;
       const { stub: agent } = await getZeroAgent(activeConnection.id);
       return agent.getRawEmail(input.id);
@@ -872,10 +993,13 @@ export const mailRouter = router({
     .query(async ({ input, ctx }) => {
       try {
         const { activeConnection } = ctx;
-        const { stub: agent } = await getZeroAgent(activeConnection.id);
-
-        console.log(`[VERIFY_EMAIL] Getting raw email for message ID: ${input.id}`);
-        const rawEmail = await agent.getRawEmail(input.id);
+        let rawEmail: string;
+        if (isYachtbaseImap(activeConnection)) {
+          rawEmail = await getImapRawEmail(activeConnection, ctx.c.req.header('Authorization'), input.id);
+        } else {
+          const { stub: agent } = await getZeroAgent(activeConnection.id);
+          rawEmail = await agent.getRawEmail(input.id);
+        }
 
         const { verify } = await import('../../lib/email-verification');
         const result = await verify(rawEmail);

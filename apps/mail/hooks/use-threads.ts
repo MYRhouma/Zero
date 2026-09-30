@@ -4,7 +4,6 @@ import type { IGetThreadResponse } from '../../server/src/lib/driver/types';
 import { useSearchValue } from '@/hooks/use-search-value';
 import { useTRPC } from '@/providers/query-provider';
 import useSearchLabels from './use-labels-search';
-import { useSession } from '@/lib/auth-client';
 import { useAtom, useAtomValue } from 'jotai';
 import { useSettings } from './use-settings';
 import { useParams } from 'react-router';
@@ -63,7 +62,6 @@ export const useThreads = () => {
 };
 
 export const useThread = (threadId: string | null) => {
-  const { data: session } = useSession();
   const [_threadId] = useQueryState('threadId');
   const id = threadId ? threadId : _threadId;
   const trpc = useTRPC();
@@ -76,7 +74,7 @@ export const useThread = (threadId: string | null) => {
         id: id!,
       },
       {
-        enabled: !!id && !!session?.user.id,
+        enabled: !!id,
         staleTime: 1000 * 60 * 60, // 1 minute
       },
     ),

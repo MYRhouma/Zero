@@ -49,8 +49,10 @@ export type ZeroEnv = {
   CLOUDFLARE_API_TOKEN: '';
   BASE_URL: string;
   VITE_PUBLIC_APP_URL: string;
+  VITE_PUBLIC_YACHTBASE_API_URL?: string;
   DATABASE_URL: string;
   BETTER_AUTH_SECRET: string;
+  YACHTBASE_EMAIL_PUBLIC_KEY?: string;
   BETTER_AUTH_URL: string;
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;

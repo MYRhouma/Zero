@@ -24,8 +24,8 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
 //   const toParam = params.to || 'someone';
 
 //   // Create common metadata properties
-//   const title = `Email ${toParam} on Zero`;
-//   const description = 'Zero - The future of email is here';
+//   const title = `Email ${toParam} on Yachtbase`;
+//   const description = 'Yachtbase - The future of email is here';
 //   const imageUrl = `/og-api/create?to=${encodeURIComponent(toParam)}${params.subject ? `&subject=${encodeURIComponent(params.subject)}` : ''}`;
 
 //   // Create metadata object

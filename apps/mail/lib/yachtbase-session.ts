@@ -11,8 +11,26 @@ export interface YachtbaseSession {
 }
 
 export async function getYachtbaseSession(headers: Headers): Promise<YachtbaseSession | null> {
-  const session = await authProxy.api.getSession({ headers });
+  const apiUrl = import.meta.env.VITE_PUBLIC_YACHTBASE_API_URL;
+  if (apiUrl) {
+    try {
+      const response = await fetch(`${apiUrl}/integrations/email-workspace/session/`, {
+        headers,
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      if (response.ok) {
+        const identity = (await response.json()) as { userId?: string; tenantId?: string; email?: string };
+        if (identity.userId && identity.tenantId) {
+          return { user: { id: `yachtbase:${identity.tenantId}:${identity.userId}`, email: identity.email }, tenant: { id: identity.tenantId } };
+        }
+      }
+    } catch {
+      // Standalone Zero accounts can still use Better Auth below.
+    }
+  }
 
+  const session = await authProxy.api.getSession({ headers });
   if (!session?.user?.id) return null;
 
   const candidate = session as typeof session & {

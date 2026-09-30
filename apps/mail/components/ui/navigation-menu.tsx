@@ -1,4 +1,3 @@
-import { GitHub, Twitter, Discord, LinkedIn } from '@/components/icons/icons';
 import { NavigationMenu as NavigationMenuPrimitive } from 'radix-ui';
 import { cva } from 'class-variance-authority';
 import { ChevronDown } from 'lucide-react';
@@ -111,18 +110,8 @@ const ListItem = React.forwardRef<
   React.ElementRef<'a'>,
   React.ComponentPropsWithoutRef<'a'> & {
     title: string;
-    platform?: 'github' | 'twitter' | 'linkedin' | 'discord';
   }
->(({ className, title, children, platform, ...props }, ref) => {
-  const IconComponent = platform
-    ? {
-        github: GitHub,
-        twitter: Twitter,
-        discord: Discord,
-        linkedin: LinkedIn,
-      }[platform]
-    : null;
-
+>(({ className, title, children, ...props }, ref) => {
   return (
     <li>
       <NavigationMenuLink asChild>
@@ -135,7 +124,6 @@ const ListItem = React.forwardRef<
           {...props}
         >
           <div className="flex items-center gap-2 text-sm font-medium leading-none">
-            {IconComponent && <IconComponent className="h-4 w-4 dark:fill-white fill-black" />}
             {title}
           </div>
           <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">{children}</p>

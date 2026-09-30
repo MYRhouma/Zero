@@ -7,7 +7,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Bell, Lightning, Mail, ScanEye, Tag, User, X, Search } from '../icons/icons';
 import { useCategorySettings, useDefaultCategoryId } from '@/hooks/use-categories';
-import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { useCommandPalette } from '../context/command-palette-context';
 import { useHotkeys, useHotkeysContext } from 'react-hotkeys-hook';
 import { ThreadDisplay } from '@/components/mail/thread-display';
@@ -18,7 +18,7 @@ import { useMediaQuery } from '../../hooks/use-media-query';
 import useSearchLabels from '@/hooks/use-labels-search';
 import * as CustomIcons from '@/components/icons/icons';
 import { MailList } from '@/components/mail/mail-list';
-import { useNavigate, useParams } from 'react-router';
+import { useParams } from 'react-router';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import { clearBulkSelectionAtom } from './use-mail';
@@ -27,7 +27,6 @@ import { useThreads } from '@/hooks/use-threads';
 import AIToggleButton from '../ai-toggle-button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
-import { useSession } from '@/lib/auth-client';
 import { m } from '@/paraglide/messages';
 import { isMac } from '@/lib/platform';
 import { useQueryState } from 'nuqs';
@@ -313,8 +312,6 @@ export function MailLayout() {
   const [mail, setMail] = useMail();
   const [, clearBulkSelection] = useAtom(clearBulkSelectionAtom);
   const isMobile = useIsMobile();
-  const navigate = useNavigate();
-  const { data: session, isPending } = useSession();
   const prevFolderRef = useRef(folder);
   const { enableScope, disableScope } = useHotkeysContext();
   const { data: activeConnection } = useActiveConnection();
@@ -330,12 +327,6 @@ export function MailLayout() {
     }
     prevFolderRef.current = folder;
   }, [folder, mail.bulkSelected.length, clearBulkSelection]);
-
-  useEffect(() => {
-    if (!session?.user && !isPending) {
-      navigate('/login');
-    }
-  }, [session?.user, isPending]);
 
   const [{ isFetching, refetch: refetchThreads }] = useThreads();
   const isDesktop = useMediaQuery('(min-width: 768px)');
@@ -426,25 +417,27 @@ export function MailLayout() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="yachtbase-mail-canvas rounded-inherit z-5 relative flex p-0 md:mr-0.5 md:mt-1">
+      <div className="yachtbase-mail-canvas rounded-inherit z-5 relative flex h-dvh p-0 md:py-1 md:pr-1">
         <ResizablePanelGroup
           direction="horizontal"
           autoSaveId="mail-panel-layout"
-          className="rounded-inherit overflow-hidden"
+          className="rounded-inherit h-full overflow-hidden"
         >
           <ResizablePanel
+            id="mail-list"
+            order={1}
             defaultSize={35}
-            minSize={35}
-            maxSize={35}
+            minSize={22}
+            maxSize={65}
             className={cn(
-              `bg-panelLight dark:bg-panelDark mb-1 w-fit shadow-sm md:mr-[3px] md:rounded-2xl lg:flex lg:h-[calc(100dvh-4rem-8px)] lg:shadow-sm`,
+              `bg-panelLight dark:bg-panelDark h-full w-fit shadow-sm md:rounded-2xl lg:flex lg:shadow-sm`,
               isDesktop && threadId && 'hidden lg:block',
             )}
             // onMouseEnter={handleMailListMouseEnter}
             // onMouseLeave={handleMailListMouseLeave}
           >
-            <div className="w-full md:h-[calc(100dvh-10px)] lg:h-[calc(100dvh-4rem-10px)]">
-              <div className="z-15 sticky top-0 p-4 pb-0">
+            <div className="flex h-full w-full min-h-0 flex-col">
+              <div className="z-15 sticky top-0 shrink-0 p-4 pb-0">
                 <div className="flex items-center gap-2">
                   <SidebarToggle className="h-10 w-10" />
 
@@ -534,7 +527,7 @@ export function MailLayout() {
                 </div>
               </div>
 
-              <div className="px-4 pt-2">
+              <div className="shrink-0 px-4 pt-2">
                 <div
                   className={cn(
                     `${category === 'Important' ? 'bg-[#F59E0D]' : category === 'All Mail' ? 'bg-[#397b7b]' : category === 'Personal' ? 'bg-[#39ae4a]' : category === 'Updates' ? 'bg-[#8B5CF6]' : category === 'Promotions' ? 'bg-[#F43F5E]' : category === 'Unread' ? 'bg-[#FF4800]' : 'bg-[#F59E0D]'}`,
@@ -544,25 +537,38 @@ export function MailLayout() {
                 />
               </div>
 
-              <div className="z-1 relative h-[calc(100dvh-(2px+2px))] overflow-hidden pt-0 md:h-[calc(100dvh-4rem)] lg:h-[calc(100dvh-4rem-4px)]">
+              <div className="z-1 relative flex min-h-0 flex-1 flex-col overflow-hidden pt-0">
                 <MailList />
               </div>
             </div>
           </ResizablePanel>
 
-          {/* <ResizableHandle className="mr-0.5 hidden opacity-0 md:block" /> */}
+          {/* Drag to resize the list and the reading pane; the split is saved by autoSaveId. */}
+          {isDesktop && (
+            <ResizableHandle
+              aria-label="Resize the email list"
+              className={cn(
+                'group w-[5px] bg-transparent after:w-2',
+                !threadId && 'hidden lg:flex',
+              )}
+            >
+              <span className="bg-border h-10 w-1 rounded-full opacity-0 transition-opacity group-hover:opacity-100 group-data-[resize-handle-state=drag]:bg-[#71b9b1] group-data-[resize-handle-state=drag]:opacity-100" />
+            </ResizableHandle>
+          )}
 
           {isDesktop && (
             <ResizablePanel
+              id="mail-thread"
+              order={2}
               className={cn(
-                'bg-panelLight dark:bg-panelDark mb-1 mr-0.5 w-fit rounded-2xl shadow-sm lg:h-[calc(100dvh-4rem-8px)]',
+                'bg-panelLight dark:bg-panelDark h-full mr-0.5 w-fit rounded-2xl shadow-sm',
                 // Only show on md screens and larger when there is a threadId
                 !threadId && 'hidden lg:block',
               )}
               defaultSize={30}
               minSize={30}
             >
-              <div className="relative flex-1">
+              <div className="relative h-full min-h-0">
                 <ThreadDisplay />
               </div>
             </ResizablePanel>

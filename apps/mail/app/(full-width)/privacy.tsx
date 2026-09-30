@@ -93,18 +93,18 @@ const sections = [
     content: (
       <div className="space-y-4">
         <p>
-          At Zero, we believe that privacy is a fundamental right. Our open-source email solution is
+          At Yachtbase, we believe that privacy is a fundamental right. Our email workspace is
           built with privacy at its core, and we&apos;re committed to being transparent about how we
           handle your data.
         </p>
         <p className="font-semibold">
-          Important: Zero is a client-only email application. We DO NOT store your emails on our
-          servers. All email data is processed directly between your browser and Gmail.
+          Important: Yachtbase is an email workspace. We do not sell your emails or use them for
+          advertising, and access remains scoped to your connected accounts.
         </p>
         <p>Our verified privacy commitments:</p>
         <ul className="ml-4 list-disc space-y-2">
           <li>
-            Zero Email Storage: We never store your emails - they remain in your Gmail account
+            Controlled Email Access: Your connected email data remains under your workspace control
           </li>
           <li>Client-Side Processing: All email processing happens in your browser</li>
           <li>Open Source: Our entire codebase is public and can be audited</li>
@@ -118,7 +118,7 @@ const sections = [
     title: 'Google Account Integration',
     content: (
       <>
-        <p className="mb-4">When you use Zero with your Google Account:</p>
+        <p className="mb-4">When you use Yachtbase with your Google Account:</p>
         <ul className="ml-4 list-disc space-y-2">
           <li>We request access to your Gmail data only after receiving your explicit consent</li>
           <li>We access only the necessary Gmail API scopes required for email functionality</li>
@@ -161,7 +161,7 @@ const sections = [
         <div>
           <h3 className="mb-3 text-lg font-medium">Self-Hosted Instances</h3>
           <ul className="ml-4 list-disc space-y-2">
-            <li>When you self-host Zero, your email data remains entirely under your control</li>
+            <li>Your connected email data remains scoped to your Yachtbase workspace</li>
             <li>No data is sent to our servers or third parties without your explicit consent</li>
             <li>You maintain complete ownership and responsibility for your data</li>
             <li>We provide detailed documentation on secure self-hosting practices</li>
@@ -239,7 +239,7 @@ const sections = [
                 <li>Basic profile information</li>
               </ul>
             </li>
-            <li>This data is used exclusively for providing email functionality within Zero</li>
+            <li>This data is used exclusively for providing email functionality within Yachtbase</li>
             <li>No Google user data is used for advertising, marketing, or profiling purposes</li>
             <li>We maintain detailed audit logs of all data access for security and compliance</li>
             <li>Access to user data is strictly limited to essential personnel</li>
@@ -339,31 +339,25 @@ const sections = [
     content: (
       <div className="space-y-6">
         <div>
-          <h3 className="mb-3 text-lg font-medium">Free Plan and Trial Period</h3>
+          <h3 className="mb-3 text-lg font-medium">Yachtbase Plans and Billing</h3>
           <ul className="ml-4 list-disc space-y-2">
             <li>
-              Zero offers a free plan with basic features that requires no payment information
+              Yachtbase plans and entitlements are managed through the Yachtbase billing workspace
             </li>
-            <li>For premium features, we offer a 7-day free trial period</li>
-            <li>A valid credit card is required to start the premium free trial</li>
-            <li>During the trial period, you have full access to all premium features</li>
-            <li>You can cancel at any time during the trial period without any charges</li>
             <li>
-              If you don't cancel before the trial ends, you'll be automatically charged for the
-              premium subscription
+              Current plan details, entitlements, and pricing are shown before you confirm a
+              subscription
             </li>
+            <li>You can manage billing, payment methods, and cancellation from Yachtbase billing</li>
           </ul>
         </div>
         <div>
           <h3 className="mb-3 text-lg font-medium">Payment and Billing</h3>
           <ul className="ml-4 list-disc space-y-2">
-            <li>
-              After the 7-day free trial period ends, subscription charges will begin automatically
-            </li>
             <li>Subscription fees are billed in advance on a monthly or annual basis</li>
             <li>Current pricing information is available on our pricing page</li>
             <li>All payments are processed securely through our trusted payment partners</li>
-            <li>Subscription charges will appear on your billing statement as "Zero Email"</li>
+            <li>Subscription charges will appear on your billing statement as "Yachtbase"</li>
             <li>
               We accept major credit cards and other payment methods as available in your region
             </li>
@@ -373,8 +367,8 @@ const sections = [
           <h3 className="mb-3 text-lg font-medium">Non-Refundable Policy</h3>
           <ul className="ml-4 list-disc space-y-2">
             <li className="font-semibold">
-              Important: All subscription fees are non-refundable once the 7-day free trial period
-              has ended
+              Important: Subscription fees are generally non-refundable after the billing period
+              begins, except where required by law or approved by Yachtbase support
             </li>
             <li>
               This policy applies to all premium subscription plans (monthly, annual, and enterprise
@@ -421,18 +415,18 @@ const sections = [
         <p>For privacy-related questions or concerns:</p>
         <div className="flex flex-col space-y-2">
           <a
-            href="mailto:founders@0.email"
+            href="mailto:support@yachtbase.co"
             className="inline-flex items-center text-blue-600 hover:text-blue-800"
           >
             <Mail className="mr-2 h-4 w-4" />
-            founders@0.email
+            support@yachtbase.co
           </a>
           <a
-            href="https://github.com/Mail-0/Zero"
+            href="mailto:support@yachtbase.co"
             className="inline-flex items-center text-blue-600 hover:text-blue-800"
           >
             <Github className="mr-2 h-4 w-4" />
-            Open an issue on GitHub
+            Contact Yachtbase support
           </a>
         </div>
       </div>

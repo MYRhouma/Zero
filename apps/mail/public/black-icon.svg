@@ -1,3 +1,6 @@
-<svg width="191" height="191" viewBox="0 0 191 191" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M38.125 190.625V152.5H0V38.125H38.125V0H152.5V38.125H190.625V152.5H152.5V190.625H38.125ZM38.125 114.375H76.25V150.975H152.5V76.25H114.375V114.375H76.25V76.25H114.375V39.65H38.125V114.375Z" fill="black"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title>Yachtbase</title>
+  <rect width="64" height="64" rx="18" fill="#061f2a"/>
+  <path d="M13 16h8.5l7.2 17.2L36 16H45L33.6 42.5c-2.8 6.5-7 9.5-14.6 9.5v-7.4c3.7 0 5.6-1.1 7-4.5L13 16Z" fill="#d7eeea"/>
+  <circle cx="47.5" cy="45.5" r="4.5" fill="#71b9b1"/>
 </svg>

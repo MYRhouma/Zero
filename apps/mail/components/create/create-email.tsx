@@ -5,7 +5,7 @@ import { useEmailAliases } from '@/hooks/use-email-aliases';
 import { cleanEmailAddresses } from '@/lib/email-utils';
 
 import { useTRPC } from '@/providers/query-provider';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSettings } from '@/hooks/use-settings';
 import { EmailComposer } from './email-composer';
 import { useSession } from '@/lib/auth-client';
@@ -59,6 +59,7 @@ export function CreateEmail({
   const [, setIsDraftFailed] = useState(false);
   const trpc = useTRPC();
   const { mutateAsync: sendEmail } = useMutation(trpc.mail.send.mutationOptions());
+  const queryClient = useQueryClient();
   const [isComposeOpen, setIsComposeOpen] = useQueryState('isComposeOpen');
   const [, setThreadId] = useQueryState('threadId');
   const [, setActiveReplyId] = useQueryState('activeReplyId');
@@ -88,24 +89,26 @@ export function CreateEmail({
     attachments: File[];
     fromEmail?: string;
     scheduleAt?: string;
+    designed?: boolean;
   }) => {
     const fromEmail = data.fromEmail || aliases?.[0]?.email || userEmail;
-
-    const zeroSignature = settings?.settings.zeroSignature
-      ? '<p style="color: #666; font-size: 12px;">Sent via <a href="https://0.email/" style="color: #0066cc; text-decoration: none;">Zero</a></p>'
-      : '';
 
     const result = await sendEmail({
       to: data.to.map((email) => ({ email, name: email.split('@')[0] || email })),
       cc: data.cc?.map((email) => ({ email, name: email.split('@')[0] || email })),
       bcc: data.bcc?.map((email) => ({ email, name: email.split('@')[0] || email })),
       subject: data.subject,
-      message: data.message + zeroSignature,
+      message: data.message,
       attachments: await serializeFiles(data.attachments),
       fromEmail: userName.trim() ? `${userName.replace(/[<>]/g, '')} <${fromEmail}>` : fromEmail,
       draftId: draftId ?? undefined,
       scheduleAt: data.scheduleAt,
     });
+
+    if (!result?.success) {
+      throw new Error(('error' in result && result.error) || 'Failed to send email');
+    }
+    void queryClient.invalidateQueries({ queryKey: trpc.mail.listThreads.pathKey() });
 
     setDraftId(null);
     clearUndoData();
@@ -206,8 +209,15 @@ export function CreateEmail({
   return (
     <>
       <Dialog open={!!isComposeOpen} onOpenChange={handleDialogClose}>
-        <div className="flex min-h-screen flex-col items-center justify-center gap-1">
-          <div className="flex w-[750px] justify-start">
+        {/* Clicking the backdrop around the window closes it, like esc. */}
+        <div
+          className="flex min-h-screen flex-col items-center justify-center gap-1 px-4 py-6"
+          onClick={(event) => event.target === event.currentTarget && handleDialogClose(false)}
+        >
+          <div
+            className="flex w-full max-w-[min(1100px,calc(100vw-2rem))] justify-start"
+            onClick={(event) => event.target === event.currentTarget && handleDialogClose(false)}
+          >
             <DialogClose asChild className="flex">
               <button className="dark:bg-panelDark flex items-center gap-1 rounded-lg bg-[#F0F0F0] px-2 py-1 hover:bg-gray-100 dark:hover:bg-[#404040] transition-colors cursor-pointer">
                 <X className="fill-muted-foreground mt-0.5 h-3.5 w-3.5 dark:fill-[#929292]" />
@@ -218,7 +228,7 @@ export function CreateEmail({
             </DialogClose>
           </div>
           {isDraftLoading ? (
-            <div className="flex h-[600px] w-[750px] items-center justify-center rounded-2xl border">
+            <div className="flex h-[min(85dvh,760px)] w-full max-w-[min(1100px,calc(100vw-2rem))] items-center justify-center rounded-2xl border">
               <div className="text-center">
                 <div className="mx-auto mb-4 h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"></div>
                 <p>Loading draft...</p>
@@ -227,7 +237,7 @@ export function CreateEmail({
           ) : (
             <EmailComposer
               key={typedDraft?.id || undoEmailData?.to?.join(',') || 'composer'}
-              className="mb-12 rounded-2xl border"
+              className="rounded-2xl border"
               onSendEmail={handleSendEmail}
               initialMessage={
                 undoEmailData?.message || 

@@ -6,6 +6,7 @@ export default [
   // Temporary compatibility boundary until Yachtbase and Better Auth sessions
   // are formally bridged. The route is not linked from the mounted workspace.
   route('/login', '(auth)/login/page.tsx'),
+  index('page.tsx'),
 
   layout('(routes)/layout.tsx', [
     layout(
@@ -27,6 +28,7 @@ export default [
         route('/danger-zone', '(routes)/settings/danger-zone/page.tsx'),
         route('/general', '(routes)/settings/general/page.tsx'),
         route('/labels', '(routes)/settings/labels/page.tsx'),
+        route('/email-templates', '(routes)/settings/email-templates/page.tsx'),
         route('/categories', '(routes)/settings/categories/page.tsx'),
         route('/notifications', '(routes)/settings/notifications/page.tsx'),
         route('/privacy', '(routes)/settings/privacy/page.tsx'),

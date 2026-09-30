@@ -47,14 +47,14 @@ const getProviderIcon = (providerId: string, className?: string): ReactNode => {
       return (
         <>
           <img
-            src="/white-icon.svg"
+            src={`${import.meta.env.BASE_URL}yachtbase-icon.svg`}
             alt="Yachtbase"
             width={15}
             height={15}
             className="mr-2 hidden dark:block"
           />
           <img
-            src="/black-icon.svg"
+            src={`${import.meta.env.BASE_URL}yachtbase-icon.svg`}
             alt="Yachtbase"
             width={15}
             height={15}

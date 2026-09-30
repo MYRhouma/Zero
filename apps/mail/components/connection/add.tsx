@@ -16,7 +16,6 @@ import { motion } from 'motion/react';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
-import { toast } from 'sonner';
 
 export const AddConnectionDialog = ({
   children,
@@ -27,27 +26,17 @@ export const AddConnectionDialog = ({
   className?: string;
   onOpenChange?: (open: boolean) => void;
 }) => {
-  const { connections, attach } = useBilling();
+  const { connections, isLoading, openBillingPortal } = useBilling();
 
   const canCreateConnection = useMemo(() => {
+    if (isLoading) return false;
     if (!connections?.remaining && !connections?.unlimited) return false;
     return (connections?.unlimited && !connections?.remaining) || (connections?.remaining ?? 0) > 0;
-  }, [connections]);
+  }, [connections, isLoading]);
   const pathname = useLocation().pathname;
 
-  const handleUpgrade = async () => {
-    if (attach) {
-      toast.promise(
-        attach({
-          productId: 'pro-example',
-          successUrl: `${import.meta.env.VITE_PUBLIC_APP_URL}/mail/inbox?success=true`,
-        }),
-        {
-          success: 'Redirecting to payment...',
-          error: 'Failed to process upgrade. Please try again later.',
-        },
-      );
-    }
+  const handleManagePlan = () => {
+    openBillingPortal();
   };
 
   return (
@@ -71,20 +60,20 @@ export const AddConnectionDialog = ({
             {m['pages.settings.connections.connectEmailDescription']()}
           </DialogDescription>
         </DialogHeader>
-        {!canCreateConnection && (
+        {!isLoading && !canCreateConnection && (
           <div className="mt-2 flex justify-between gap-2 rounded-lg border border-red-800 bg-red-800/20 p-2">
             <span className="text-sm">
-              You can only connect 1 email in the free tier.{' '}
+              Email connections require an active Yachtbase plan.{' '}
               <span
-                onClick={handleUpgrade}
+                onClick={handleManagePlan}
                 className="hover:bg-subtleWhite hover:text-subtleBlack cursor-pointer underline"
               >
-                Start 7 day free trial
+                View Yachtbase billing
               </span>{' '}
-              to connect more.
+              to manage access.
             </span>
-            <Button onClick={handleUpgrade} className="text-sm">
-              $20<span className="text-muted-foreground -ml-2 text-xs">/month</span>
+            <Button onClick={handleManagePlan} className="text-sm">
+              Billing
             </Button>
           </div>
         )}
@@ -106,7 +95,7 @@ export const AddConnectionDialog = ({
                 whileTap={{ scale: 0.97 }}
               >
                 <Button
-                  disabled={!canCreateConnection}
+                  disabled={isLoading || !canCreateConnection}
                   variant="outline"
                   className="h-24 w-full flex-col items-center justify-center gap-2"
                   onClick={async () =>

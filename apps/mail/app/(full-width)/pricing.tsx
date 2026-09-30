@@ -1,43 +1,24 @@
-import { PixelatedBackground } from '@/components/home/pixelated-bg';
-import PricingCard from '@/components/pricing/pricing-card';
-import Comparision from '@/components/pricing/comparision';
-
-import { Navigation } from '@/components/navigation';
-
-import Footer from '@/components/home/footer';
+import { Link } from 'react-router';
 
 export default function PricingPage() {
   return (
-    <main className="relative flex min-h-screen flex-1 flex-col overflow-x-hidden bg-[#0F0F0F]">
-      <PixelatedBackground
-        className="z-1 absolute left-1/2 top-[-40px] h-auto w-screen min-w-[1920px] -translate-x-1/2 object-cover"
-        style={{
-          mixBlendMode: 'screen',
-          maskImage: 'linear-gradient(to bottom, black, transparent)',
-        }}
-      />
-      <Navigation />
-
-      <div className="container mx-auto mt-12 px-4 py-16 md:mt-44">
-        <div className="mb-12 text-center">
-          <h1 className="mb-2 self-stretch text-5xl font-medium leading-[62px] text-white md:text-6xl">
-            Simple, Transparent Pricing
-          </h1>
-          <p className="mt-6 text-2xl font-light text-[#B8B8B9]">
-            Choose the plan that's right for you
-          </p>
-        </div>
-
-        <div className="mx-auto max-w-7xl">
-          <PricingCard />
-        </div>
-      </div>
-      <div className="container mx-auto mb-40 px-4">
-        <Comparision />
-      </div>
-      <div className="mt-auto">
-        <Footer />
-      </div>
+    <main className="flex min-h-screen items-center justify-center bg-[#f6fbfa] px-6 text-[#0b2431] dark:bg-[#0b2431] dark:text-white">
+      <section className="max-w-xl rounded-3xl border border-[#0b2431]/10 bg-white p-8 text-center shadow-sm dark:border-white/10 dark:bg-[#102f3b]">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#397b7b]">
+          Yachtbase email workspace
+        </p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight">Plans are managed in Yachtbase</h1>
+        <p className="mt-4 text-sm leading-6 opacity-70">
+          Your Yachtbase subscription includes unlimited email connections, inbox AI, labeling,
+          writing assistance, thread summaries, and priority support on eligible paid plans.
+        </p>
+        <Link
+          to="/dashboard/settings/billing"
+          className="mt-6 inline-flex rounded-full bg-[#397b7b] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#2d6667]"
+        >
+          Open Yachtbase billing
+        </Link>
+      </section>
     </main>
   );
 }

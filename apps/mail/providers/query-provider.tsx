@@ -1,31 +1,11 @@
-import {
-  PersistQueryClientProvider,
-  type PersistedClient,
-  type Persister,
-} from '@tanstack/react-query-persist-client';
-import { QueryCache, QueryClient, hashKey, type InfiniteData } from '@tanstack/react-query';
+import { QueryCache, QueryClient, QueryClientProvider, hashKey } from '@tanstack/react-query';
 import { createTRPCContext } from '@trpc/tanstack-react-query';
 import { createTRPCClient, httpBatchLink } from '@trpc/client';
 import { useMemo, type PropsWithChildren } from 'react';
 import type { AppRouter } from '@zero/server/trpc';
-import { CACHE_BURST_KEY } from '@/lib/constants';
 import { signOut } from '@/lib/auth-client';
-import { get, set, del } from 'idb-keyval';
 import superjson from 'superjson';
-
-function createIDBPersister(idbValidKey: IDBValidKey = 'zero-query-cache') {
-  return {
-    persistClient: async (client: PersistedClient) => {
-      await set(idbValidKey, client);
-    },
-    restoreClient: async () => {
-      return await get<PersistedClient>(idbValidKey);
-    },
-    removeClient: async () => {
-      await del(idbValidKey);
-    },
-  } satisfies Persister;
-}
+import { getYachtbaseMailToken } from '@/lib/yachtbase-token';
 
 export const makeQueryClient = (connectionId: string | null) =>
   new QueryClient({
@@ -93,8 +73,11 @@ export const trpcClient = createTRPCClient<AppRouter>({
       url: getUrl(),
       methodOverride: 'POST',
       maxItems: 1,
-      fetch: (url, options) =>
-        fetch(url, { ...options, credentials: 'include' }).then((res) => {
+      fetch: async (url, options) => {
+        const token = await getYachtbaseMailToken();
+        const headers = new Headers(options?.headers);
+        if (token) headers.set('Authorization', `Bearer ${token}`);
+        return fetch(url, { ...options, headers, credentials: 'include' }).then((res) => {
           const currentPath = new URL(window.location.href).pathname;
           const redirectPath = res.headers.get('X-Zero-Redirect');
           if (!!redirectPath && redirectPath !== currentPath) {
@@ -102,52 +85,23 @@ export const trpcClient = createTRPCClient<AppRouter>({
             res.headers.delete('X-Zero-Redirect');
           }
           return res;
-        }),
+        });
+      },
     }),
   ],
 });
 
-type TrpcHook = ReturnType<typeof useTRPC>;
 export function QueryProvider({
   children,
   connectionId,
 }: PropsWithChildren<{ connectionId: string | null }>) {
-  const persister = useMemo(
-    () => createIDBPersister(`zero-query-cache-${connectionId ?? 'default'}`),
-    [connectionId],
-  );
   const queryClient = useMemo(() => getQueryClient(connectionId), [connectionId]);
 
   return (
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{
-        persister,
-        buster: CACHE_BURST_KEY,
-        maxAge: 1000 * 60 * 60 * 24, // 24 hours
-      }}
-      onSuccess={() => {
-        const threadQueryKey = [['mail', 'listThreads'], { type: 'infinite' }];
-        queryClient.setQueriesData(
-          { queryKey: threadQueryKey },
-          (data: InfiniteData<TrpcHook['mail']['listThreads']['~types']['output']>) => {
-            if (!data) return data;
-            // We only keep few pages of threads in the cache before we invalidate them
-            // invalidating will attempt to refetch every page that was in cache, if someone have too many pages in cache, it will refetch every page every time
-            // We don't want that, just keep like 3 pages (20 * 3 = 60 threads) in cache
-            return {
-              pages: data.pages.slice(0, 3),
-              pageParams: data.pageParams.slice(0, 3),
-            };
-          },
-        );
-        // invalidate the query, it will refetch when the data is it is being accessed
-        queryClient.invalidateQueries({ queryKey: threadQueryKey });
-      }}
-    >
+    <QueryClientProvider client={queryClient}>
       <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
         {children}
       </TRPCProvider>
-    </PersistQueryClientProvider>
+    </QueryClientProvider>
   );
 }

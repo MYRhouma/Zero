@@ -74,9 +74,14 @@ export function useOptimisticActions() {
   const generatePendingActionId = () =>
     `pending_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
+  // Mailboxes without live push (e.g. IMAP) rely on this to update every folder.
   const refreshData = useCallback(async () => {
-    return await queryClient.refetchQueries({ queryKey: trpc.labels.list.queryKey() });
-  }, [queryClient]);
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: trpc.mail.listThreads.pathKey() }),
+      queryClient.invalidateQueries({ queryKey: trpc.mail.get.pathKey() }),
+      queryClient.refetchQueries({ queryKey: trpc.labels.list.queryKey() }),
+    ]);
+  }, [queryClient, trpc]);
 
   function createPendingAction({
     type,

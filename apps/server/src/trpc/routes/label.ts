@@ -1,3 +1,5 @@
+import { isYachtbaseImap, yachtbaseMail } from '../../lib/yachtbase-imap';
+import { createFolder, deleteFolder, renameFolder } from '../../lib/yachtbase-imap-extras';
 import { activeDriverProcedure, createRateLimiterMiddleware, router } from '../trpc';
 import { getZeroAgent } from '../../lib/server-utils';
 import { Ratelimit } from '@upstash/ratelimit';
@@ -28,6 +30,13 @@ export const labelsRouter = router({
     )
     .query(async ({ ctx }) => {
       const { activeConnection } = ctx;
+      if (isYachtbaseImap(activeConnection)) {
+        // Custom IMAP folders appear as labels; standard folders have their own nav.
+        const { folders } = await yachtbaseMail(activeConnection, ctx.c.req.header('Authorization')).folders();
+        return folders
+          .filter((folder) => folder.role === 'custom')
+          .map((folder) => ({ id: folder.name, name: folder.label || folder.name, type: 'user', labels: [], count: 0 }));
+      }
       const { stub: agent } = await getZeroAgent(activeConnection.id);
       return await agent.getUserLabels();
     }),
@@ -54,6 +63,11 @@ export const labelsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const { activeConnection } = ctx;
+      if (isYachtbaseImap(activeConnection)) {
+        // IMAP folders stand in for labels; colours are not an IMAP concept and are ignored.
+        const folder = await createFolder(activeConnection, ctx.c.req.header('Authorization'), input.name);
+        return { id: folder.name, name: folder.label, type: 'user' };
+      }
       const { stub: agent } = await getZeroAgent(activeConnection.id);
       const label = {
         ...input,
@@ -83,6 +97,10 @@ export const labelsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const { activeConnection } = ctx;
+      if (isYachtbaseImap(activeConnection)) {
+        const folder = await renameFolder(activeConnection, ctx.c.req.header('Authorization'), input.id, input.name);
+        return { id: folder.name, name: folder.label, type: 'user' };
+      }
       const { stub: agent } = await getZeroAgent(activeConnection.id);
       const { id, ...label } = input;
       return await agent.updateLabel(id, label);
@@ -97,6 +115,10 @@ export const labelsRouter = router({
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const { activeConnection } = ctx;
+      if (isYachtbaseImap(activeConnection)) {
+        await deleteFolder(activeConnection, ctx.c.req.header('Authorization'), input.id);
+        return;
+      }
       const { stub: agent } = await getZeroAgent(activeConnection.id);
       return await agent.deleteLabel(input.id);
     }),

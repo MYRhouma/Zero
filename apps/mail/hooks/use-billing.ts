@@ -1,6 +1,4 @@
-import { useAutumn, useCustomer } from 'autumn-js/react';
-import { isProCustomer } from '@/lib/utils';
-import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 type FeatureState = {
   total: number;
@@ -13,115 +11,94 @@ type FeatureState = {
   included_usage: number;
 };
 
+type YachtbaseEmailAccess = {
+  enabled: boolean;
+  plan: string;
+  source: string;
+  access_state: string;
+};
+
 type Features = {
   chatMessages: FeatureState;
   connections: FeatureState;
   brainActivity: FeatureState;
 };
 
-const DEFAULT_FEATURES: Features = {
-  chatMessages: {
-    total: 0,
-    remaining: 0,
-    unlimited: false,
-    enabled: false,
-    usage: 0,
-    nextResetAt: null,
-    interval: '',
-    included_usage: 0,
-  },
-  connections: {
-    total: 0,
-    remaining: 0,
-    unlimited: false,
-    enabled: false,
-    usage: 0,
-    nextResetAt: null,
-    interval: '',
-    included_usage: 0,
-  },
-  brainActivity: {
-    total: 0,
-    remaining: 0,
-    unlimited: false,
-    enabled: false,
-    usage: 0,
-    nextResetAt: null,
-    interval: '',
-    included_usage: 0,
-  },
+const createFeature = (enabled: boolean, unlimited = false): FeatureState => ({
+  total: unlimited && enabled ? -1 : 0,
+  remaining: 0,
+  unlimited: unlimited && enabled,
+  enabled,
+  usage: 0,
+  nextResetAt: null,
+  interval: '',
+  included_usage: unlimited && enabled ? -1 : 0,
+});
+
+const getYachtbaseApiBaseUrl = () => {
+  const configured = import.meta.env.VITE_PUBLIC_YACHTBASE_API_URL;
+  if (configured) return configured.replace(/\/+$/, '');
+
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'app.yachtbase.co') {
+      return 'https://api.yachtbase.co/api/v1';
+    }
+    if (window.location.hostname === 'dev.yachtbase.co') {
+      return 'https://api-dev.yachtbase.co/api/v1';
+    }
+  }
+
+  return 'http://localhost:8000/api/v1';
 };
 
-const FEATURE_IDS = {
-  CHAT: 'chat-messages',
-  CONNECTIONS: 'connections',
-  BRAIN: 'brain-activity',
-} as const;
+const getEmailAccessUrl = () => `${getYachtbaseApiBaseUrl()}/payments/email-access/`;
 
+/**
+ * Yachtbase owns billing for the embedded mail workspace. This adapter keeps
+ * the existing mail UI contract while sourcing entitlements from Yachtbase's
+ * authenticated subscription endpoint instead of the legacy mail billing service.
+ */
 export const useBilling = () => {
-  const { customer, refetch, isLoading } = useCustomer();
-  const { attach, track, openBillingPortal } = useAutumn();
+  const { data, refetch, isLoading } = useQuery({
+    queryKey: ['yachtbase-email-access'],
+    queryFn: async () => {
+      const response = await fetch(getEmailAccessUrl(), {
+        credentials: 'include',
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+      });
 
-  const { isPro, ...customerFeatures } = useMemo(() => {
-    const isPro = customer ? isProCustomer(customer) : false;
+      if (!response.ok) {
+        throw new Error(`Unable to load Yachtbase email access (${response.status})`);
+      }
 
-    if (!customer?.features) return { isPro, ...DEFAULT_FEATURES };
+      return (await response.json()) as YachtbaseEmailAccess;
+    },
+    staleTime: 60_000,
+    retry: false,
+  });
 
-    const features = { ...DEFAULT_FEATURES };
-
-    if (customer.features[FEATURE_IDS.CHAT]) {
-      const feature = customer.features[FEATURE_IDS.CHAT];
-      features.chatMessages = {
-        total: feature.included_usage || 0,
-        remaining: feature.balance || 0,
-        unlimited: feature.unlimited ?? false,
-        enabled: (feature.unlimited ?? false) || Number(feature.balance) > 0,
-        usage: feature.usage || 0,
-        nextResetAt: feature.next_reset_at ?? null,
-        interval: feature.interval || '',
-        included_usage: feature.included_usage || 0,
-      };
-    }
-
-    if (customer.features[FEATURE_IDS.CONNECTIONS]) {
-      const feature = customer.features[FEATURE_IDS.CONNECTIONS];
-      features.connections = {
-        total: feature.included_usage || 0,
-        remaining: feature.balance || 0,
-        unlimited: feature.unlimited ?? false,
-        enabled: (feature.unlimited ?? false) || Number(feature.balance) > 0,
-        usage: feature.usage || 0,
-        nextResetAt: feature.next_reset_at ?? null,
-        interval: feature.interval || '',
-        included_usage: feature.included_usage || 0,
-      };
-    }
-
-    if (customer.features[FEATURE_IDS.BRAIN]) {
-      const feature = customer.features[FEATURE_IDS.BRAIN];
-      features.brainActivity = {
-        total: feature.included_usage || 0,
-        remaining: feature.balance || 0,
-        unlimited: feature.unlimited ?? false,
-        enabled: (feature.unlimited ?? false) || Number(feature.balance) > 0,
-        usage: feature.usage || 0,
-        nextResetAt: feature.next_reset_at ?? null,
-        interval: feature.interval || '',
-        included_usage: feature.included_usage || 0,
-      };
-    }
-
-    return { isPro, ...features };
-  }, [customer]);
+  const enabled = data?.enabled === true;
+  const features: Features = {
+    chatMessages: createFeature(enabled, true),
+    connections: createFeature(enabled, true),
+    brainActivity: createFeature(enabled),
+  };
 
   return {
     isLoading,
-    customer,
+    customer: null,
     refetch,
-    attach,
-    track,
-    openBillingPortal,
-    isPro,
-    ...customerFeatures,
+    // Yachtbase is the sole billing source for this embedded experience.
+    attach: undefined,
+    track: async () => undefined,
+    openBillingPortal: () => {
+      if (typeof window !== 'undefined') {
+        window.location.assign('/dashboard/settings/billing');
+      }
+    },
+    isPro: enabled,
+    plan: data?.plan ?? null,
+    ...features,
   };
 };

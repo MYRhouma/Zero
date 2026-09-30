@@ -1,26 +1,7 @@
-import { LinkedIn, Twitter, Discord } from '../icons/icons';
 import { motion } from 'motion/react';
 import { Button } from '../ui/button';
 import { Link } from 'react-router';
 import { useRef } from 'react';
-
-const socialLinks = [
-  {
-    name: 'Twitter',
-    href: 'https://x.com/mail0dotcom',
-    icon: Twitter,
-  },
-  {
-    name: 'LinkedIn',
-    href: 'https://www.linkedin.com/company/mail0/',
-    icon: LinkedIn,
-  },
-  {
-    name: 'Discord',
-    href: 'https://discord.gg/mail0',
-    icon: Discord,
-  },
-];
 
 export default function Footer() {
   const ref = useRef(null);
@@ -62,7 +43,7 @@ export default function Footer() {
                 className="hidden flex-col items-center justify-start md:flex"
               >
                 <div className="justify-start text-center text-lg font-normal leading-7 text-white lg:text-2xl">
-                  Get started and see how 0.email helps you process your inbox in a fraction of the
+                  Get started and see how Yachtbase helps you process your inbox in a fraction of the
                   time.
                 </div>
               </motion.div>
@@ -72,7 +53,7 @@ export default function Footer() {
                 transition={{ duration: 0.5, delay: 0.4 }}
                 className="flex w-fit flex-col items-center justify-center md:pt-4"
               >
-                <a href="/dashboard/email-inbox/login">
+                <a href="/login">
                   <Button className="h-8 bg-white text-black cursor-pointer">Get Started</Button>
                 </a>
               </motion.div>
@@ -85,23 +66,16 @@ export default function Footer() {
           <div className="inline-flex flex-col items-start justify-between gap-4 mb-10 md:mb-0 self-stretch">
             <div className="inline-flex w-8 items-center justify-start gap-3">
               <a href="/">
-                <img src="/white-icon.svg" alt="logo" width={100} height={100} />
+                <img src={`${import.meta.env.BASE_URL}yachtbase-icon.svg`} alt="logo" width={100} height={100} />
               </a>
             </div>
             <div className="inline-flex items-center justify-start gap-4">
-              {socialLinks.map((social) => (
-                <a
-                  key={social.name}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2.5 rounded-[999px] bg-white/10 p-2 backdrop-blur-[20px] transition-colors hover:bg-white/20"
-                >
-                  <div className="relative h-3.5 w-3.5 overflow-hidden">
-                    <social.icon className="absolute h-3.5 w-3.5 fill-white" />
-                  </div>
-                </a>
-              ))}
+              <a
+                href="mailto:support@yachtbase.co"
+                className="rounded-full bg-white/10 px-3 py-2 text-xs text-white/80 transition-colors hover:bg-white/20"
+              >
+                Yachtbase support
+              </a>
             </div>
             <div className="flex items-center justify-start gap-3">
               <div className="justify-start text-base font-normal leading-none text-white opacity-80">
@@ -129,11 +103,11 @@ export default function Footer() {
                 <a
                   target="_blank"
                   rel="noreferrer"
-                  href="https://trust.inc/zero"
+                  href="mailto:support@yachtbase.co"
                   className="w-full"
                 >
                   <div className="justify-start self-stretch text-sm md:text-base font-normal leading-none text-white opacity-80 transition-opacity hover:opacity-100">
-                    SOC2
+                    Support
                   </div>
                 </a>
                 <a href="/privacy" className="w-full" target="_blank">
@@ -149,33 +123,33 @@ export default function Footer() {
               </div>
               <div className="flex flex-col items-start justify-start gap-4 self-stretch">
                 <a
-                  href="https://x.com/nizzyabi/status/1918064165530550286"
+                  href="/dashboard/inbox"
                   className="w-full"
                   target="_blank"
                   rel="noreferrer"
                 >
                   <div className="justify-start self-stretch text-sm md:text-base leading-none text-white opacity-80 transition-opacity hover:opacity-100">
-                    Chat with Zero
+                    Yachtbase inbox
                   </div>
                 </a>
                 <a
-                  href="https://x.com/nizzyabi/status/1918051282881069229"
+                  href="/dashboard/email"
                   className="w-full"
                   target="_blank"
                   rel="noreferrer"
                 >
                   <div className="justify-start self-stretch text-sm md:text-base leading-none text-white opacity-80 transition-opacity hover:opacity-100">
-                    Zero AI
+                    Yachtbase AI email
                   </div>
                 </a>
                 <a
-                  href="https://x.com/nizzyabi/status/1919292505260249486"
+                  href="/dashboard/email"
                   className="w-full"
                   target="_blank"
                   rel="noreferrer"
                 >
                   <div className="justify-start self-stretch text-sm md:text-base leading-none text-white opacity-80 transition-opacity hover:opacity-100">
-                    Shortcuts
+                    Email workspace
                   </div>
                 </a>
               </div>
@@ -185,24 +159,14 @@ export default function Footer() {
                 Company
               </div>
               <div className="flex flex-col items-start justify-start gap-4 self-stretch">
-                <a target="_blank" href="/contributors" className="w-full">
+                <a href="/about" className="w-full">
                   <div className="justify-start self-stretch text-sm md:text-base font-normal leading-none text-white opacity-80 transition-opacity hover:opacity-100">
-                    Contributors
+                    About Yachtbase
                   </div>
                 </a>
-                <a target="_blank" href="/about" className="w-full">
+                <a href="mailto:support@yachtbase.co" className="w-full">
                   <div className="justify-start self-stretch text-sm md:text-base font-normal leading-none text-white opacity-80 transition-opacity hover:opacity-100">
-                    About
-                  </div>
-                </a>
-                <a
-                  target="_blank"
-                  rel="noreferrer"
-                  href="https://github.com/Mail-0/Zero"
-                  className="w-full"
-                >
-                  <div className="justify-start self-stretch text-sm md:text-base font-normal leading-none text-white opacity-80 transition-opacity hover:opacity-100">
-                    Github
+                    Contact support
                   </div>
                 </a>
               </div>
@@ -213,7 +177,7 @@ export default function Footer() {
         <div className="flex flex-col items-start justify-start gap-6 self-stretch">
           <div className="inline-flex items-center justify-between self-stretch flex-col-reverse md:flex-row gap-3">
             <div className="justify-start text-xs font-medium leading-tight text-white opacity-80 sm:text-sm">
-              © 2025 Zero Email Inc, All Rights Reserved
+              © 2025 Yachtbase, All Rights Reserved
             </div>
             <div className="flex items-center gap-4">
               <Link

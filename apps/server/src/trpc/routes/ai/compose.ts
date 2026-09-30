@@ -14,6 +14,9 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText } from 'ai';
 import { z } from 'zod';
 import { getGeminiComposeModelName, getGeminiGenerationSettings } from './compose-model';
+import { senderIdentityPrompt, type SenderIdentity } from '../../../lib/sender-identity';
+import { senderForConnection } from '../../../lib/yachtbase-sender-identity';
+import { generateWithTools } from '../../../lib/ai-tool-loop';
 
 type ComposeEmailInput = {
   prompt: string;
@@ -29,6 +32,7 @@ type ComposeEmailInput = {
   }>;
   username: string;
   connectionId: string;
+  sender?: SenderIdentity;
 };
 
 const getGeminiComposeModel = () => {
@@ -45,7 +49,7 @@ const getGeminiComposeModel = () => {
 };
 
 export async function composeEmail(input: ComposeEmailInput) {
-  const { prompt, threadMessages = [], cc, emailSubject, to, username, connectionId } = input;
+  const { prompt, threadMessages = [], cc, emailSubject, to, username, connectionId, sender } = input;
 
   const writingStyleMatrix = await getWritingStyleMatrixForConnectionId({
     connectionId,
@@ -61,6 +65,7 @@ export async function composeEmail(input: ComposeEmailInput) {
     prompt,
     username,
     styleProfile: writingStyleMatrix?.style as WritingStyleMatrix,
+    sender: sender ?? { personName: username },
   });
 
   const threadUserMessages = threadMessages.map((message) => ({
@@ -99,28 +104,15 @@ export async function composeEmail(input: ComposeEmailInput) {
           },
         ];
 
-  const { text } = await generateText({
+  return await generateWithTools({
     model: getGeminiComposeModel(),
-    messages: [
-      {
-        role: 'system',
-        content: systemPrompt,
-      },
-      ...messages,
-      {
-        role: 'user',
-        content: userPrompt,
-      },
-    ],
-    maxSteps: 10,
+    system: systemPrompt,
+    messages: [...messages, { role: 'user', content: userPrompt }],
+    tools: { webSearch: webSearch() },
+    maxRounds: 3,
     maxTokens: 2_000,
     ...getGeminiGenerationSettings(),
-    tools: {
-      webSearch: webSearch(),
-    },
   });
-
-  return text;
 }
 
 export const compose = activeConnectionProcedure
@@ -151,6 +143,7 @@ export const compose = activeConnectionProcedure
       ...input,
       username: sessionUser.name,
       connectionId: activeConnection.id,
+      sender: await senderForConnection(activeConnection, sessionUser.name, ctx.c.req.header('Authorization')),
     });
 
     return { newBody };
@@ -170,7 +163,8 @@ export const generateEmailSubject = activeConnectionProcedure
       connectionId: activeConnection.id,
     });
 
-    const subject = await generateSubject(message, writingStyleMatrix?.style as WritingStyleMatrix);
+    const sender = await senderForConnection(activeConnection, ctx.sessionUser.name, ctx.c.req.header('Authorization'));
+    const subject = await generateSubject(message, writingStyleMatrix?.style as WritingStyleMatrix, sender);
 
     return {
       subject,
@@ -209,16 +203,19 @@ const EmailAssistantPrompt = ({
   prompt,
   username,
   styleProfile,
+  sender,
 }: {
   currentSubject?: string;
   recipients?: string[];
   prompt: string;
   username: string;
   styleProfile?: WritingStyleMatrix | null;
+  sender: SenderIdentity;
 }) => {
   const parts: string[] = [];
 
   parts.push('# Email Composition Task');
+  parts.push(senderIdentityPrompt(sender));
   if (styleProfile) {
     parts.push('## Style Profile');
     parts.push(`\`\`\`json
@@ -259,10 +256,15 @@ const EmailAssistantPrompt = ({
   return parts.join('\n\n');
 };
 
-const generateSubject = async (message: string, styleProfile?: WritingStyleMatrix | null) => {
+const generateSubject = async (
+  message: string,
+  styleProfile: WritingStyleMatrix | null | undefined,
+  sender: SenderIdentity,
+) => {
   const parts: string[] = [];
 
   parts.push('# Email Subject Generation Task');
+  parts.push(senderIdentityPrompt(sender));
   if (styleProfile) {
     parts.push('## Style Profile');
     parts.push(`\`\`\`json
@@ -274,7 +276,7 @@ const generateSubject = async (message: string, styleProfile?: WritingStyleMatri
   parts.push(escapeXml(message));
   parts.push('');
   parts.push(
-    'Generate a concise, clear subject line that summarizes the main point of the email. The subject should be professional and under 100 characters.',
+    'Generate a concise, clear subject line that summarizes the main point of the email. The subject should be professional and under 100 characters. Reply with the subject line only, without quotes or a "Subject:" prefix.',
   );
 
   const { text } = await generateText({
@@ -294,5 +296,5 @@ const generateSubject = async (message: string, styleProfile?: WritingStyleMatri
     ...getGeminiGenerationSettings(0.3),
   });
 
-  return text.trim();
+  return text.trim().replace(/^subject:\s*/i, '').replace(/^["'“”]+|["'“”]+$/g, '').trim();
 };

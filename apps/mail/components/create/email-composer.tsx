@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
-import { Check, Command, Loader, Paperclip, Plus, Type, X as XIcon } from 'lucide-react';
+import { Check, Command, Loader, Paperclip, Plus, Sparkles as SparklesIcon, Type, X as XIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TextEffect } from '@/components/motion-primitives/text-effect';
 import { ScheduleSendPicker } from './schedule-send-picker';
@@ -50,7 +50,9 @@ import { compressImages } from '@/lib/image-compression';
 import type { ImageQuality } from '@/lib/image-compression';
 
 const shortcodeRegex = /:([a-zA-Z0-9_+-]+):/g;
-import { TemplateButton } from './template-button';
+import { DesignedEmailEditor, finalizeDesignedHtml } from './designed-email-editor';
+import { TemplatesButton } from './design-button';
+import { ComposeAssistant } from './compose-assistant';
 
 type ThreadContent = {
   from: string;
@@ -77,6 +79,8 @@ interface EmailComposerProps {
     attachments: File[];
     fromEmail?: string;
     scheduleAt?: string;
+    /** True when `message` is a complete designed email from a workspace template. */
+    designed?: boolean;
   }) => Promise<void>;
   onClose?: () => void;
   className?: string;
@@ -131,6 +135,10 @@ export function EmailComposer({
   const [isGeneratingSubject, setIsGeneratingSubject] = useState(false);
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [scheduleAt, setScheduleAt] = useState<string>();
+  // A workspace template placed in the body; its edited HTML is what gets sent.
+  const [designed, setDesigned] = useState<{ id: string; name: string; html: string } | null>(null);
+  const designedHtml = useRef('');
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const [isScheduleValid, setIsScheduleValid] = useState<boolean>(true);
   const [showAttachmentWarning, setShowAttachmentWarning] = useState(false);
   const [originalAttachments, setOriginalAttachments] = useState<File[]>(initialAttachments);
@@ -240,9 +248,6 @@ export function EmailComposer({
   });
 
   const { watch, setValue, getValues } = form;
-  const toEmails = watch('to');
-  const ccEmails = watch('cc');
-  const bccEmails = watch('bcc');
   const subjectInput = watch('subject');
   const attachments = watch('attachments');
   const fromEmail = watch('fromEmail');
@@ -319,7 +324,7 @@ export function EmailComposer({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        const hasContent = editor?.getText()?.trim().length > 0;
+        const hasContent = editor?.getText()?.trim().length > 0 || !!designed;
         if (hasContent && !draftId) {
           e.preventDefault();
           e.stopPropagation();
@@ -330,7 +335,7 @@ export function EmailComposer({
 
     document.addEventListener('keydown', handleKeyDown, true); // Use capture phase
     return () => document.removeEventListener('keydown', handleKeyDown, true);
-  }, [editor, draftId]);
+  }, [editor, draftId, designed]);
 
   const proceedWithSend = async () => {
     try {
@@ -359,18 +364,20 @@ export function EmailComposer({
         cc: showCc ? values.cc : undefined,
         bcc: showBcc ? values.bcc : undefined,
         subject: values.subject,
-        message: editor.getHTML(),
+        message: designed ? finalizeDesignedHtml(designedHtml.current || designed.html) : editor.getHTML(),
         attachments: values.attachments || [],
         fromEmail: values.fromEmail,
         scheduleAt,
+        designed: !!designed,
       });
+      setDesigned(null);
       setHasUnsavedChanges(false);
       editor.commands.clearContent(true);
       form.reset();
       setIsComposeOpen(null);
     } catch (error) {
       console.error('Error sending email:', error);
-      toast.error('Failed to send email');
+      toast.error(error instanceof Error && error.message ? error.message : 'Failed to send email');
     } finally {
       setIsLoading(false);
     }
@@ -414,6 +421,15 @@ export function EmailComposer({
       };
     });
   }, [emailData]);
+
+  // The last messages of the conversation, as plain text, so the assistant can write replies in context.
+  const assistantContext = useMemo(() => {
+    const recent = threadContent.slice(-3).map((message) => {
+      const body = new DOMParser().parseFromString(message.body, 'text/html').body.textContent ?? '';
+      return `From: ${message.from}\nSubject: ${message.subject}\n\n${body.replace(/\s+\n/g, '\n').trim()}`;
+    });
+    return recent.join('\n\n---\n\n').slice(-20_000) || undefined;
+  }, [threadContent]);
 
   const handleAiGenerate = async () => {
     try {
@@ -614,11 +630,14 @@ export function EmailComposer({
   return (
     <div
       className={cn(
-        'flex max-h-[500px] w-full max-w-[750px] flex-col overflow-hidden rounded-2xl bg-[#FAFAFA] shadow-sm dark:bg-[#202020]',
+        'flex max-h-[min(85dvh,760px)] w-full max-w-[min(1100px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl bg-[#FAFAFA] shadow-sm dark:bg-[#202020]',
         className,
+        // A designed email needs room to be read and edited comfortably.
+        designed && 'max-h-[calc(100dvh-5rem)]',
       )}
     >
-      <div className="no-scrollbar dark:bg-panelDark flex min-h-0 flex-1 flex-col overflow-y-auto rounded-2xl">
+      <div className="relative flex min-h-0 flex-1">
+      <div className="no-scrollbar dark:bg-panelDark flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto rounded-2xl">
         {/* To, Cc, Bcc */}
         <div className="shrink-0 overflow-visible border-b border-[#E7E7E7] pb-2 dark:border-[#252525]">
           <div className="flex justify-between px-3 pt-3">
@@ -762,9 +781,38 @@ export function EmailComposer({
               aiGeneratedMessage !== null ? 'blur-sm' : '',
             )}
           >
-            <EditorContent editor={editor} className="h-full w-full max-w-full overflow-x-auto" />
+            {designed ? (
+              <DesignedEmailEditor
+                key={designed.id}
+                html={designed.html}
+                templateName={designed.name}
+                subject={subjectInput}
+                onChange={(html) => {
+                  designedHtml.current = html;
+                }}
+              />
+            ) : (
+              <EditorContent editor={editor} className="h-full w-full max-w-full overflow-x-auto" />
+            )}
           </div>
         </div>
+      </div>
+      <ComposeAssistant
+        open={assistantOpen}
+        onClose={() => setAssistantOpen(false)}
+        mode={designed ? 'email' : 'plain'}
+        context={assistantContext}
+        getHtml={() => (designed ? designedHtml.current || designed.html : editor.isEmpty ? '' : editor.getHTML())}
+        applyHtml={(html) => {
+          if (designed) {
+            designedHtml.current = html;
+            setDesigned((value) => (value ? { ...value, html } : value));
+          } else {
+            editor.commands.setContent(html, true);
+          }
+          setHasUnsavedChanges(true);
+        }}
+      />
       </div>
 
       {/* Bottom Actions */}
@@ -792,14 +840,36 @@ export function EmailComposer({
               <Plus className="h-3 w-3 fill-[#9A9A9A]" />
               <span className="hidden px-0.5 text-sm md:block">Add</span>
             </Button>
-            <TemplateButton
-              editor={editor}
+            <Button
+              type="button"
+              size={'xs'}
+              variant={'secondary'}
+              aria-pressed={assistantOpen}
+              onClick={() => setAssistantOpen((value) => !value)}
+              className={cn(
+                'border transition-colors cursor-pointer',
+                assistantOpen
+                  ? 'border-[#0b2431] bg-[#0b2431] text-white hover:bg-[#173f4e]'
+                  : 'bg-background hover:bg-gray-50 dark:hover:bg-[#404040]',
+              )}
+            >
+              <SparklesIcon className={cn('h-3.5 w-3.5', assistantOpen ? 'text-[#a7d8d1]' : 'text-[#71b9b1]')} />
+              <span className="hidden px-0.5 text-sm md:block">Assistant</span>
+            </Button>
+            <TemplatesButton
+              value={designed?.id ?? null}
+              onApply={(template) => {
+                if (!template) {
+                  setDesigned(null);
+                  return;
+                }
+                designedHtml.current = template.html;
+                setDesigned({ id: template.id, name: template.name, html: template.html });
+                if (template.subject && !subjectInput.trim()) setValue('subject', template.subject);
+                setHasUnsavedChanges(true);
+              }}
+              getContent={() => editor?.getHTML() ?? ''}
               subject={subjectInput}
-              setSubject={(value) => setValue('subject', value)}
-              to={toEmails}
-              cc={ccEmails ?? []}
-              bcc={bccEmails ?? []}
-              setRecipients={(field, val) => setValue(field, val)}
             />
             <Input
               type="file"

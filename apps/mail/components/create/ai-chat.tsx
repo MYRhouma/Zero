@@ -10,6 +10,7 @@ import { TextShimmer } from '../ui/text-shimmer';
 import { useThread } from '@/hooks/use-threads';
 import { MailLabels } from '../mail/mail-list';
 import { cn, getEmailLogo } from '@/lib/utils';
+import { YachtbaseWordmark } from '../icons/yachtbase-wordmark';
 import type { Message as AiMessage } from 'ai';
 import { VoiceButton } from '../voice-button';
 import { EditorContent } from '@tiptap/react';
@@ -73,7 +74,7 @@ const ThreadPreview = ({ threadId }: { threadId: string }) => {
 const ExampleQueries = ({ onQueryClick }: { onQueryClick: (query: string) => void }) => {
   const firstRowQueries = [
     'Find all work meetings today',
-    'Label all emails from Github as OSS',
+    'Label all emails from partners as Business',
     'Show recent Linear feedback',
   ];
 
@@ -204,9 +205,8 @@ export function AIChat({
 }: ReturnType<typeof useAgentChat>): React.ReactElement {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const { chatMessages } = useBilling();
+  const { chatMessages, isLoading, openBillingPortal } = useBilling();
   const { isFullScreen } = useAIFullScreen();
-  const [, setPricingDialog] = useQueryState('pricingDialog');
   const [aiSidebarOpen] = useQueryState('aiSidebar');
   const { toggleOpen } = useAISidebar();
 
@@ -223,7 +223,7 @@ export function AIChat({
   }, [status, scrollToBottom]);
 
   const editor = useComposeEditor({
-    placeholder: 'Ask Zero to do anything...',
+    placeholder: 'Ask anything about your email...',
     onLengthChange: () => setInput(editor.getText()),
     onKeydown(event) {
       if (event.key === '0' && event.metaKey) {
@@ -261,27 +261,24 @@ export function AIChat({
     <div className={cn('flex h-full flex-col', isFullScreen ? 'mx-auto max-w-xl' : '')}>
       <div className="no-scrollbar flex-1 overflow-y-auto" ref={messagesContainerRef}>
         <div className="min-h-full px-2 py-4">
-          {chatMessages && !chatMessages.enabled ? (
+          {!isLoading && !chatMessages.enabled ? (
             <div
-              onClick={() => setPricingDialog('true')}
+              onClick={openBillingPortal}
               className="absolute inset-0 flex flex-col items-center justify-center"
             >
               <TextShimmer className="text-center text-xl font-medium">
-                Upgrade to Zero Pro for unlimited AI chat
+                Activate Yachtbase to unlock AI chat
               </TextShimmer>
-              <Button className="mt-2 h-8 w-52">Start 7 day free trial</Button>
+              <Button className="mt-2 h-8 w-52">Open Yachtbase billing</Button>
             </div>
           ) : !messages.length ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="relative mb-4 h-[44px] w-[44px]">
-                <img src="/black-icon.svg" alt="Zero Logo" className="dark:hidden" />
-                <img src="/white-icon.svg" alt="Zero Logo" className="hidden dark:block" />
-              </div>
+              <YachtbaseWordmark className="mb-3 h-7 text-[#0b2431] dark:text-white" />
               <p className="mb-1 mt-2 hidden text-center text-sm font-medium text-black md:block dark:text-white">
-                Ask anything about your emails
+                Yachtbase AI assistant
               </p>
               <p className="mb-3 text-center text-sm text-[#8C8C8C] dark:text-[#929292]">
-                Ask to do or show anything using natural language
+                Ask me to find, summarise, reply, organise or write anything in your mailbox
               </p>
 
               {/* Example Thread */}
@@ -356,7 +353,7 @@ export function AIChat({
           {(status === 'submitted' || status === 'streaming') && (
             <div className="absolute bottom-0 ml-2 flex items-center gap-2">
               <TextShimmer className="text-muted-foreground text-xs">
-                zero is thinking...
+                Thinking...
               </TextShimmer>
             </div>
           )}
@@ -394,7 +391,7 @@ export function AIChat({
                   form="ai-chat-form"
                   type="submit"
                   className="inline-flex cursor-pointer gap-1.5 rounded-lg"
-                  disabled={!chatMessages.enabled}
+                  disabled={!isLoading && !chatMessages.enabled}
                 >
                   <div className="dark:bg[#141414] flex h-7 items-center justify-center gap-1 rounded-sm bg-[#262626] px-2 pr-1">
                     <CurvedArrow className="mt-1.5 h-4 w-4 fill-white dark:fill-[#929292]" />

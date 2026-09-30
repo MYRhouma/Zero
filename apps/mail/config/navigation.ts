@@ -174,6 +174,11 @@ export const navigationConfig: Record<string, NavConfig> = {
             icon: Sheet,
           },
           {
+            title: 'Email templates',
+            url: '/settings/email-templates',
+            icon: Sheet,
+          },
+          {
             title: m['navigation.settings.categories'](),
             url: '/settings/categories',
             icon: Tabs,

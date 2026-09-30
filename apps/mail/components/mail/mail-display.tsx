@@ -1342,8 +1342,16 @@ const MailDisplay = ({ emailData, index, totalEmails, demo, threadAttachments }:
                               }}
                               className="hover:bg-muted font-semibold"
                             >
-                              {cleanNameDisplay(emailData?.sender?.name)}
+                              {cleanNameDisplay(emailData?.sender?.name) ||
+                                cleanEmailDisplay(emailData?.sender?.email)}
                             </span>
+                            {cleanNameDisplay(emailData?.sender?.name) &&
+                              emailData?.sender?.email &&
+                              emailData.sender.name !== emailData.sender.email && (
+                                <span className="text-muted-foreground truncate text-sm dark:text-[#8C8C8C]">
+                                  &lt;{cleanEmailDisplay(emailData.sender.email)}&gt;
+                                </span>
+                              )}
                             <EmailVerificationBadge messageId={emailData?.id} />
                           </div>
 
@@ -1547,9 +1555,14 @@ const MailDisplay = ({ emailData, index, totalEmails, demo, threadAttachments }:
                                 ...(emailData?.cc || []),
                               ];
 
-                              // If you're the only recipient
-                              if (allRecipients.length === 1 && folder !== 'sent') {
-                                return <span key="you">You</span>;
+                              // Only say "You" when the sole recipient is this mailbox.
+                              const ownEmail = activeConnection?.email?.toLowerCase();
+                              if (
+                                allRecipients.length === 1 &&
+                                ownEmail &&
+                                allRecipients[0]?.email?.toLowerCase() === ownEmail
+                              ) {
+                                return <span key="you">You &lt;{allRecipients[0]?.email}&gt;</span>;
                               }
 
                               // Show first 3 recipients + count of others

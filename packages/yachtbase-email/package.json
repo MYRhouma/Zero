@@ -1,0 +1,7 @@
+{
+  "name": "@zero/yachtbase-email",
+  "private": true,
+  "type": "module",
+  "exports": { "./connection-options": "./src/connection-options.ts" },
+  "peerDependencies": { "react": "^19.0.0" }
+}

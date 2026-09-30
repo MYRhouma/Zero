@@ -16,6 +16,8 @@ import { Button } from '@/components/ui/button';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useLabels } from '@/hooks/use-labels';
 import { useAgentChat } from 'agents/ai-react';
+import { useChat } from '@ai-sdk/react';
+import { getYachtbaseMailToken } from '@/lib/yachtbase-token';
 import { X, Expand, Plus } from 'lucide-react';
 import { IncomingMessageType } from '../party';
 import { useParams } from 'react-router';
@@ -294,9 +296,8 @@ export function useAISidebar() {
   };
 }
 
-function AISidebar({ className }: AISidebarProps) {
-  const { open, setOpen, isFullScreen, setIsFullScreen, toggleViewMode, isSidebar, isPopup } =
-    useAISidebar();
+/** Assistant for Google/Microsoft mailboxes, backed by the mail agent over a websocket. */
+function AgentChatSidebar({ className }: AISidebarProps) {
   const { track, refetch: refetchBilling } = useBilling();
   const queryClient = useQueryClient();
   const trpc = useTRPC();
@@ -424,6 +425,59 @@ function AISidebar({ className }: AISidebarProps) {
     },
   });
 
+  return <AISidebarView chatState={chatState} className={className} />;
+}
+
+/** Assistant for Yachtbase IMAP mailboxes, served over HTTP by the mail API. */
+function MailboxChatSidebar({ className }: AISidebarProps) {
+  const queryClient = useQueryClient();
+  const trpc = useTRPC();
+  const [threadId] = useQueryState('threadId');
+  const { folder } = useParams<{ folder: string }>();
+
+  const chatState = useChat({
+    api: `${import.meta.env.VITE_PUBLIC_BACKEND_URL}/api/mailbox-assistant/chat`,
+    credentials: 'include',
+    body: { threadId: threadId ?? undefined, currentFolder: folder ?? undefined },
+    fetch: async (url, init) => {
+      const token = await getYachtbaseMailToken();
+      const headers = new Headers(init?.headers);
+      if (token) headers.set('Authorization', `Bearer ${token}`);
+      return fetch(url, { ...init, headers });
+    },
+    onError(error) {
+      console.error('Mailbox assistant error', error);
+      toast.error('The assistant could not answer. Please try again.');
+    },
+    // The assistant may mark, archive or bin threads; refresh what is on screen.
+    onFinish: () => queryClient.invalidateQueries({ queryKey: trpc.mail.pathKey() }),
+  });
+
+  return (
+    <AISidebarView
+      chatState={chatState as unknown as ReturnType<typeof useAgentChat>}
+      className={className}
+    />
+  );
+}
+
+function AISidebar({ className }: AISidebarProps) {
+  const { data: activeConnection } = useActiveConnection();
+  if (!activeConnection?.id) return null;
+  return activeConnection.providerId === 'imap' ? (
+    <MailboxChatSidebar className={className} />
+  ) : (
+    <AgentChatSidebar className={className} />
+  );
+}
+
+function AISidebarView({
+  chatState,
+  className,
+}: AISidebarProps & { chatState: ReturnType<typeof useAgentChat> }) {
+  const { open, setOpen, isFullScreen, setIsFullScreen, toggleViewMode, isSidebar, isPopup } =
+    useAISidebar();
+
   useHotkeys('Meta+0', () => {
     setOpen(!open);
   });
@@ -441,6 +495,8 @@ function AISidebar({ className }: AISidebarProps) {
             <>
               <div className="w-px opacity-0" />
               <ResizablePanel
+                id="ai-sidebar"
+                order={3}
                 defaultSize={24}
                 minSize={24}
                 maxSize={24}

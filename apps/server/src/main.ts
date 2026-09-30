@@ -48,9 +48,13 @@ import type { HonoContext } from './ctx';
 import { createDb, type DB } from './db';
 import { createAuth } from './lib/auth';
 import { aiRouter } from './routes/ai';
+import { mailboxAssistant } from './routes/mailbox-assistant';
 import { appRouter } from './trpc';
 import { cors } from 'hono/cors';
 import { Hono } from 'hono';
+import { yachtbaseWorkspace, yachtbaseOAuthCallback } from './lib/yachtbase-workspace';
+import { verifyYachtbaseMailSession } from './lib/yachtbase-session';
+import { provisionYachtbaseImapConnections } from './lib/provision-yachtbase-imap';
 
 const SENTRY_HOST = 'o4509328786915328.ingest.us.sentry.io';
 const SENTRY_PROJECT_IDS = new Set(['4509328795303936']);
@@ -586,6 +590,12 @@ function hashIpAddress(ip: string | undefined): string | undefined {
 
 const api = new Hono<HonoContext>()
   .use(contextStorage())
+  .route('/yachtbase', yachtbaseWorkspace)
+  .get('/auth/callback/google', async (c, next) => {
+    const response = yachtbaseOAuthCallback(c.req.raw);
+    if (response) return response;
+    await next();
+  })
   .use('*', async (c, next) => {
     // Initialize request tracing using headers (no context pollution)
     const traceId = c.req.header('X-Trace-ID') || crypto.randomUUID();
@@ -670,6 +680,22 @@ const api = new Hono<HonoContext>()
       }
     }
 
+    if (!c.var.sessionUser && c.req.header('Authorization')?.startsWith('Bearer ')) {
+      try {
+        const token = c.req.header('Authorization')!.slice(7);
+        const identity = await verifyYachtbaseMailSession(token, env.YACHTBASE_EMAIL_PUBLIC_KEY || '');
+        // The signature proves who the member is; if refreshing their mailboxes
+        // from Yachtbase fails transiently, keep using the ones already mirrored.
+        const yachtbaseUser = await provisionYachtbaseImapConnections(identity, token).catch(async (error) => {
+          console.warn('[yachtbase] mailbox refresh failed, using mirrored connections', error);
+          return (await getZeroDB(identity.zeroUserId)).findUser();
+        });
+        if (yachtbaseUser) c.set('sessionUser', yachtbaseUser);
+      } catch {
+        // Leave the request unauthenticated. Private procedures reject it.
+      }
+    }
+
     // Complete auth span
     TraceContext.completeSpan(traceId, authSpan.id, {
       authenticated: !!c.var.sessionUser,
@@ -704,8 +730,35 @@ const api = new Hono<HonoContext>()
     c.set('auth', undefined as any);
   })
   .route('/ai', aiRouter)
+  .route('/mailbox-assistant', mailboxAssistant)
   .route('/autumn', autumnApi)
   .route('/public', publicRouter)
+  .get('/auth/get-session', async (c, next) => {
+    // Yachtbase members have no Better Auth session; describe the verified
+    // Yachtbase identity in the same shape so the UI treats them as signed in.
+    const sessionUser = c.var.sessionUser;
+    const token = c.req.header('Authorization')?.slice(7);
+    if (!sessionUser?.id.startsWith('yachtbase:') || !token) return next();
+    const identity = await verifyYachtbaseMailSession(token, env.YACHTBASE_EMAIL_PUBLIC_KEY || '');
+    const now = new Date();
+    return c.json(
+      {
+        session: {
+          id: `yachtbase-session:${sessionUser.id}`,
+          userId: sessionUser.id,
+          token: '',
+          expiresAt: new Date(now.getTime() + 30_000),
+          createdAt: now,
+          updatedAt: now,
+          ipAddress: null,
+          userAgent: null,
+        },
+        user: { ...sessionUser, name: identity.name, email: identity.email || sessionUser.email },
+      },
+      200,
+      { 'Cache-Control': 'private, no-store' },
+    );
+  })
   .on(['GET', 'POST', 'OPTIONS'], '/auth/*', (c) => {
     const url = new URL(c.req.raw.url);
     url.pathname = `/dashboard/email-api${url.pathname}`;
